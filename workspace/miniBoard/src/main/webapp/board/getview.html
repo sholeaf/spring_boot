@@ -1,0 +1,59 @@
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>getview</title>
+</head>
+
+<body>
+	<p>
+		제목 <input id="boardtitle" name="boardtitle" value="" readonly>
+	</p>
+	<p>
+		작성자 <input type="text" id="userid" name="userid" value="" readonly>
+	</p>
+	<p id="regdate">
+		작성일자
+	</p>
+	<p>
+		내용 <textarea id="boardcontents" name="boardcontents" readonly></textarea>
+	</p>
+	<hr>
+	<div id="btn_area">
+		<a href="/user/main">목록</a>
+
+		<a href="#">수정</a>
+		<a href="#">삭제</a>
+
+	</div>
+</body>
+<script>
+	//console.log(window.location.search);
+	//쿼리 스트링 추출해서 URLSearchParams 객체 생성
+	const params = new URLSearchParams(window.location.search);
+	//URLSearchParams 객체에서 boardnum 파라미터 찾기
+	const boardnum = params.get("boardnum");
+	console.log(boardnum);
+	
+	
+	const xhr = new XMLHttpRequest();
+	
+	xhr.onreadystatechange = function(){
+		if(xhr.readyState ==4){
+			if(xhr.status == 200){
+				console.log(xhr.responseText);
+				const board = JSON.parse(xhr.responseText);
+				
+				document.getElementById("boardtitle").value = board.boardtitle;
+				document.getElementById("userid").value = board.userid;
+				document.getElementById("regdate").innerHTML += board.regdate;
+				document.getElementById("boardcontents").value = board.boardcontents;
+			}
+		}
+	}
+	
+	xhr.open("GET","/board/getDetail?boardnum="+boardnum);
+	xhr.send();
+</script>
+
+</html>
