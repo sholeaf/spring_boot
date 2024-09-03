@@ -7,6 +7,11 @@
 	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+	<th:block th:if="${session.loginUser != null}">
+		<script>
+			location.replace('/board/list');
+		</script>
+	</th:block>
     <div id="wrap" class="login">
         <form action="/user/login" method="post" name="loginForm">
 			<table>
@@ -37,6 +42,18 @@
     </div>
 	<img src="/images/타이틀.png">
 </body>
+<th:block th:if="${joinid != null}">
+	<script th:inline="javascript">
+		window.onload = function(){
+			let joinid = /*[[${joinid}]]*/'';
+			alert("가입을 환영합니다!");
+			setTimeout(function(){
+				document.loginForm.userid.value = joinid;
+				document.loginForm.userpw.focus();
+			},1300)
+		}
+	</script>
+</th:block>
 <script>
 	window.setTimeout(function(){
 		document.querySelector("#wrap.login+img").classList = "hdd";

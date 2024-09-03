@@ -23,6 +23,7 @@ create table t_board(
     readcount int default 0,
     userid varchar(300)
 );
+insert into t_board (boardtitle, boardcontents, userid) values('테스트 제목1','테스트 내용1','apple');
 
 drop table t_file;
 create table t_file(

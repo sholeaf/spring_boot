@@ -101,7 +101,7 @@
 						<td>
 							<div>
 								<div class="hobby_input">
-									<input type="text" name="hobby"><input type="button" value="추가">
+									<input type="text" name="hobby" onkeyup="hobbyKeyup()"><input type="button" value="추가" onclick="addHobby()">
 								</div>
 								<div class="hobby_list"></div>
 								<input type="hidden" name="userhobby">
@@ -110,7 +110,7 @@
 					</tr>
 					<tr>
 						<th colspan="2">
-							<input type="button" value="가입 완료" onclick="">
+							<input type="button" value="가입 완료" onclick="sendit()">
 						</th>
 					</tr>
 				</tbody>
