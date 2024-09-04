@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>get</title>
+<link href="/css/style.css" rel="stylesheet">
+</head>
+<body class="get">
+	<div id="wrap" class="get">
+		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
+		<table border="1" class="board_area">
+			<tr>
+				<th>제목</th>
+				<td id="boardtitle">[[${board.boardtitle}]]</td>
+			</tr>
+			<tr>
+				<th>작성자</th>
+				<td id="userid">[[${board.userid}]]</td>
+			</tr>
+			<tr>
+				<th>조회수</th>
+				<td id="readcount">[[${board.readcount}]]</td>
+			</tr>
+			<tr>
+				<th>내용</th>
+				<td id="boardcontents">[[${board.boardcontents}]]</td>
+			</tr>
+		</table>
+		<table class="btn_area">
+			<tbody>
+				<tr>
+					<td>
+						<a class="btn" th:href="${'/board/list'+cri.listLink}">목록</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="reply_line"></div>
+	</div>
+</body>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script th:inline="javascript">
+	window.setTimeout(function(){
+		document.querySelector("#wrap>div:nth-child(1)").style.display="none";
+	},1200)
+</script>
+</html>

@@ -9,15 +9,15 @@ public class PageDTO {
 	private int realEnd;
 	private long total;
 	private boolean prev, next;
-	private int pagenum;
+	private Criteria cri;
 	
-	public PageDTO(long total,int pagenum) {
-		this.pagenum = pagenum;
+	public PageDTO(long total,Criteria cri) {
+		this.cri = cri;
 		this.total = total;
 		
-		this.endPage = (int)Math.ceil(pagenum/10.0)*10;
-		this.startPage = this.endPage - 9;
-		this.realEnd = (int)Math.ceil(total/10.0);
+		this.endPage = (int)Math.ceil(cri.getPagenum()/(double)cri.getAmount())*cri.getAmount();
+		this.startPage = this.endPage - (cri.getAmount()-1);
+		this.realEnd = (int)Math.ceil(total/(double)cri.getAmount());
 		//this.realEnd가 0 이라는 뜻은 게시글의 개수가 0이라는 뜻이므로
 		//시작 페이지도 1, 마지막 페이지도 1이여야 한다.
 		this.realEnd = this.realEnd == 0 ? 1 : this.realEnd;

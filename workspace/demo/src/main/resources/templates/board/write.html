@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>write</title>
+<link href="/css/style.css" rel="stylesheet">
+</head>
+<body class="write">
+	<div id="wrap">
+		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
+		<form id="boardForm" method="post" name="boardForm" action="/board/write">
+			<table border="1">
+				<tr>
+					<th>제목</th>
+					<td>
+						<input type="text" name="boardtitle" maxlength="50" placeholder="제목을 입력하세요">
+					</td>
+				</tr>
+				<tr>
+					<th>작성자</th>
+					<td>
+						<input type="text" name="userid" maxlength="50" readonly th:value="${session.loginUser}">
+					</td>
+				</tr>
+				<tr>
+					<th>내용</th>
+					<td>
+						<textarea name="boardcontents"></textarea>
+					</td>
+				</tr>
+				<tr class="r0">
+					<th>파일 첨부1</th>
+					<td class="file0_cont">
+						<div>
+							<input type="file" name="files" id="file0" style="display:none">
+							<span id="file0name">선택된 파일 없음</span>
+						</div>
+						<div>
+							<a class="btn">파일 선택</a>
+							<a class="btn">첨부 삭제</a>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</form>
+		<table class="btn_area">
+			<tbody>
+				<tr>
+					<td>
+						<a class="btn" href="javascript:sendit()">등록</a>
+						<a class="btn" th:href="${'/board/list'+cri.listLink}">목록</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+	window.setTimeout(function(){
+		document.querySelector("#wrap>div:nth-child(1)").style.display="none";
+	},1200)
+	function sendit(){
+		const boardForm = document.boardForm;
+		//유효성 검사
+		boardForm.submit();
+	}
+</script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

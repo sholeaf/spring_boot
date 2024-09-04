@@ -8,6 +8,11 @@
 <link href="/css/style.css" rel="stylesheet">
 </head>
 <body class="list">
+	<th:block th:if="${w != null and w != ''}">
+		<script>
+			alert("게시글 등록 성공!");
+		</script>
+	</th:block>
 	<div id="wrap" class="list">
 		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
 		<!-- 게시글 리스트 띄워주는 테이블 -->
@@ -31,7 +36,7 @@
 				<div class="row" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
 					<div>[[${board.boardnum}]]</div>
 					<div>
-						<a>[[${board.boardtitle}]]</a>
+						<a class="get" th:href="${board.boardnum}">[[${board.boardtitle}]]</a>
 					</div>
 					<div>[[${board.userid}]]</div>
 					<div>[[${board.regdate}]]</div>
@@ -47,8 +52,8 @@
 						<a th:if="${pageMaker.prev}" class="btn changePage" th:href="${pageMaker.startPage-1}">&lt;</a>
 						<!-- #numbers.sequence(1,7) : [1,2,3,4,5,6,7] -->
 						<th:block th:each="i:${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
-							<a class="btn changePage" th:href="${i}" th:if="${pageMaker.pagenum != i}">[[${i}]]</a>
-							<span class="nowPage" th:if="${pageMaker.pagenum == i}">[[${i}]]</span>
+							<a class="btn changePage" th:href="${i}" th:if="${pageMaker.cri.pagenum != i}">[[${i}]]</a>
+							<span class="nowPage" th:if="${pageMaker.cri.pagenum == i}">[[${i}]]</span>
 						</th:block>
 						<a th:if="${pageMaker.next}" class="btn changePage" th:href="${pageMaker.endPage+1}">&gt;</a>
 					</td>
@@ -60,7 +65,7 @@
 			<tbody>
 				<tr>
 					<td>
-						<a class="write btn">글쓰기</a>
+						<a class="write btn" href="javascript:handleClickWrite()">글쓰기</a>
 					</td>
 				</tr>
 			</tbody>
@@ -70,17 +75,17 @@
 			<form name="searchForm" id="searchForm" action="/board/list">
 				<select name="type" id="type">
 					<option value="">검색</option>
-					<option value="T">제목</option>
+					<option value="T" selected>제목</option>
 					<option value="C">내용</option>
 					<option value="W">작성자</option>
 					<option value="TC">제목 또는 내용</option>
 					<option value="TW">제목 또는 작성자</option>
 					<option value="TCW">제목 또는 내용 또는 작성자</option>
 				</select>
-				<input type="search" id="keyword" name="keyword">
+				<input type="search" id="keyword" name="keyword" value="지우개">
 				<a id="search-btn" class="btn" onclick="">검색</a>
-				<input type="hidden" name="pagenum">
-				<input type="hidden" name="amount">
+				<input type="hidden" name="pagenum" th:value="${pageMaker.cri.pagenum}">
+				<input type="hidden" name="amount" th:value="${pageMaker.cri.amount}">
 			</form>
 		</div>
 	</div>
@@ -112,10 +117,33 @@
 	</div>
 </body>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script>
+<script th:inline="javascript">
 	setTimeout(function(){
 		document.querySelector("#wrap>div:nth-child(1)").style.display = "none";
 	},1300)
+	function handleClickWrite(){
+		const form = document.searchForm;
+		form.action = "/board/write";
+		form.submit();
+	}
+	
+	$(".changePage").click(function(e){
+		//e(이벤트)의 기본 작동 막기
+		e.preventDefault();
+		let pagenum = e.target.getAttribute("href");
+		//console.log(pagenum);
+		const form = document.searchForm;
+		form.pagenum.value = pagenum;
+		form.submit();
+	})
+	$(".get").click(function(e){
+		e.preventDefault();
+		let boardnum = e.target.getAttribute("href");
+		let listLink = /*[[${pageMaker.cri.listLink}]]*/'';
+		// /board/get?pagenum=4&amount=10&type=T&keyword=지우개&boardnum=99
+		location.href = '/board/get'+listLink+"&boardnum="+boardnum;
+	})
+	
 </script>
 </html>
 
