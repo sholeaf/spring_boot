@@ -45,6 +45,11 @@ public class Criteria {
 		//		?pagenum=4&amount=10& ...
 		return builder.toUriString();
 	}
+	
+//	MyBatis에서 #{typeArr} 사용 가능
+	public String[] getTypeArr() {
+		return type == null ? new String[] {} : type.split("");
+	}
 }
 
 

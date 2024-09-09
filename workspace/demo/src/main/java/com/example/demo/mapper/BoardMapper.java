@@ -10,7 +10,11 @@ import com.example.demo.domain.Criteria;
 @Mapper
 public interface BoardMapper {
 	List<BoardDTO> getList(Criteria cri);
-	long getTotal();
+	long getTotal(Criteria cri);
 	int insertBoard(BoardDTO board);
 	BoardDTO getBoardByBoardnum(long boardnum);
+	long getLastNum(String userid);
+	void updateReadCount(long boardnum, int readcount);
+	int updateBoard(BoardDTO board);
+	int deleteBoard(long boardnum);
 }

@@ -11,4 +11,5 @@ public class BoardDTO {
 	private String updatedate;
 	private int readcount;
 	private String userid;
+	private boolean isNew;
 }

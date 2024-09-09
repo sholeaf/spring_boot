@@ -18,6 +18,7 @@ import com.example.demo.service.BoardService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/board/*")
@@ -30,16 +31,8 @@ public class BoardController {
 	public void list(Criteria cri, HttpServletRequest req, Model model) {
 		List<BoardDTO> list = service.getList(cri);
 		model.addAttribute("list",list);
-		model.addAttribute("pageMaker", new PageDTO(service.getTotal(), cri));
-		Cookie[] cookies = req.getCookies();
-		if(cookies != null) {
-			for(Cookie cookie : cookies) {
-				if(cookie.getName().equals("w")) {
-					model.addAttribute("w",cookie.getValue());
-					break;
-				}
-			}
-		}
+		model.addAttribute("pageMaker", new PageDTO(service.getTotal(cri), cri));
+
 	}
 	
 //	0. 응답해야할 것이 View인지 데이터인지
@@ -67,7 +60,8 @@ public class BoardController {
 			cookie.setPath("/");
 			cookie.setMaxAge(5);
 			resp.addCookie(cookie);
-			return "redirect:/board/list";
+			long boardnum = service.getLastNum(board.getUserid());
+			return "redirect:/board/get?boardnum="+boardnum;
 		}
 		else {
 			return "redirect:/board/list";
@@ -75,9 +69,81 @@ public class BoardController {
 	}
 	
 	@GetMapping("get")
-	public void get(Criteria cri, long boardnum, Model model) {
+	public String get(Criteria cri, long boardnum, HttpServletRequest req, HttpServletResponse resp, Model model) {
+		//list 에서 보던 곳으로 돌아가기 위한 cri 세팅
 		model.addAttribute("cri",cri);
+		HttpSession session = req.getSession();
+		//현재 로그인 된 사람의 아이디
+		String loginUser = (String)session.getAttribute("loginUser");
+		//넘겨진 boardnum에 해당하는 게시글 데이터 검색
+		BoardDTO board = service.getDetail(boardnum);
+		
+		Cookie[] cookies = req.getCookies();
+		if(cookies != null) {
+			for(Cookie cookie : cookies) {
+				//get으로 넘어온 때가 작성 완료 후 넘어왔다면, 알럿을 띄워주기 위한 w 쿠키 검사 후 모델에 추가
+				if(cookie.getName().equals("w")) {
+					model.addAttribute("w",cookie.getValue());
+					break;
+				}
+			}
+		}
+		//내 게시글이 아닌 다른 사람의 게시글을 봤을 때
+		if(!board.getUserid().equals(loginUser)) {
+			Cookie read_board = null;
+			if(cookies != null) {
+				for(Cookie cookie : cookies) {
+					//ex) 1번 게시글을 조회하고자 클릭했을 때에는 "read_board1" 쿠키를 찾음
+					if(cookie.getName().equals("read_board"+boardnum)) {
+						read_board = cookie;
+						break;
+					}
+				}
+			}
+			
+			//read_board가 null이라는 뜻은 위에서 쿠키를 찾았을 때 존재하지 않았다는 뜻
+			//첫 조회거나 조회한지 1시간이 지난 후
+			if(read_board == null) {
+				service.increaseReadCount(boardnum);
+				//read_board1 이름의 쿠키(유효기간:3600초)를 생성해서 클라이언트에 저장
+				Cookie cookie = new Cookie("read_board"+boardnum, "r");
+				cookie.setPath("/");
+				cookie.setMaxAge(3600);
+				resp.addCookie(cookie);
+				board.setReadcount(board.getReadcount()+1);
+			}
+		}
+		model.addAttribute("board",board);
+		return "/board/get";
+	}
+	
+	@GetMapping("modify")
+	public void modify(Criteria cri, long boardnum, Model model) {
 		model.addAttribute("board",service.getDetail(boardnum));
+		model.addAttribute("cri",cri);
+	}
+	
+	@PostMapping("modify")
+	public String modify(BoardDTO board,Criteria cri) {
+		if(service.modify(board)) {
+			
+		}
+		else {
+			
+		}
+		return "redirect:/board/get"+cri.getListLink()+"&boardnum="+board.getBoardnum();
+	}
+	
+	@GetMapping("remove")
+	public String remove(Criteria cri, long boardnum,HttpServletRequest req) {
+		String loginUser = (String)req.getSession().getAttribute("loginUser");
+		BoardDTO board = service.getDetail(boardnum);
+		if(board.getUserid().equals(loginUser)) {
+			if(service.remove(boardnum)) {
+				return "redirect:/board/list"+cri.getListLink();
+			}
+		}
+		return "redirect:/board/get"+cri.getListLink()+"&boardnum="+boardnum;
 	}
 }
 

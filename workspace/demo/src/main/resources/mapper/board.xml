@@ -2,16 +2,62 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.BoardMapper">
+	<sql id="cri">
+		<if test="keyword != '' and keyword != null and type != '' and type != null">
+			<trim prefixOverrides="or" prefix="(" suffix=") and">
+				<foreach collection="typeArr" item="t">
+					or
+					<choose>
+						<when test="t == 'T'.toString()">
+							boardtitle like ('%${keyword}%')
+						</when>
+						<when test="t == 'C'.toString()">
+							boardcontents like ('%${keyword}%')
+						</when>
+						<when test="t == 'W'.toString()">
+							userid like ('%${keyword}%')
+						</when>
+					</choose>
+				</foreach>
+			</trim>
+		</if>
+	</sql>
+	
 	<insert id="insertBoard">
 		insert into t_board (boardtitle,boardcontents,userid) values(#{boardtitle},#{boardcontents},#{userid})
 	</insert>
+	<update id="updateReadCount">
+		update t_board
+		set readcount = #{readcount}
+		where boardnum = #{boardnum}
+	</update>
+	<update id="updateBoard">
+		update t_board
+		set boardtitle = #{boardtitle}, boardcontents = #{boardcontents}, updatedate = now()
+		where boardnum = #{boardnum}
+	</update>
+	<delete id="deleteBoard">
+		delete from t_board where boardnum=#{boardnum}
+	</delete>
 	<select id="getList">
-		select * from t_board order by boardnum desc limit #{startrow}, #{amount} 
+		select * from t_board
+		where
+		<include refid="cri"></include>
+		boardnum > 0 order by boardnum desc limit #{startrow}, #{amount} 
 	</select>
 	<select id="getTotal">
 		select count(*) from t_board
+		where
+		<include refid="cri"></include>
+		boardnum > 0
 	</select>
 	<select id="getBoardByBoardnum">
 		select * from t_board where boardnum=#{boardnum}
 	</select>
+	<select id="getLastNum">
+		select max(boardnum) from t_board where userid=#{userid}
+	</select>
 </mapper>
+
+
+

@@ -7,7 +7,11 @@ import com.example.demo.domain.Criteria;
 
 public interface BoardService {
 	List<BoardDTO> getList(Criteria cri);
-	long getTotal();
+	long getTotal(Criteria cri);
 	boolean regist(BoardDTO board);
 	BoardDTO getDetail(long boardnum);
+	long getLastNum(String userid);
+	void increaseReadCount(long boardnum);
+	boolean modify(BoardDTO board);
+	boolean remove(long boardnum);
 }

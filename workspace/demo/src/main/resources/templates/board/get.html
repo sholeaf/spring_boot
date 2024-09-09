@@ -6,6 +6,11 @@
 <link href="/css/style.css" rel="stylesheet">
 </head>
 <body class="get">
+	<th:block th:if="${w != null and w != ''}">
+		<script>
+			alert("게시글 등록 성공!");
+		</script>
+	</th:block>
 	<div id="wrap" class="get">
 		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
 		<table border="1" class="board_area">
@@ -30,6 +35,10 @@
 			<tbody>
 				<tr>
 					<td>
+						<th:block th:if="${board.userid == session.loginUser}">
+							<a class="btn" th:href="${'/board/modify'+cri.listLink+'&boardnum='+board.boardnum}">수정</a>
+							<a class="btn" th:href="${'/board/remove'+cri.listLink+'&boardnum='+board.boardnum}">삭제</a>
+						</th:block>
 						<a class="btn" th:href="${'/board/list'+cri.listLink}">목록</a>
 					</td>
 				</tr>

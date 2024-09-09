@@ -8,11 +8,7 @@
 <link href="/css/style.css" rel="stylesheet">
 </head>
 <body class="list">
-	<th:block th:if="${w != null and w != ''}">
-		<script>
-			alert("게시글 등록 성공!");
-		</script>
-	</th:block>
+	
 	<div id="wrap" class="list">
 		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
 		<!-- 게시글 리스트 띄워주는 테이블 -->
@@ -36,10 +32,13 @@
 				<div class="row" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
 					<div>[[${board.boardnum}]]</div>
 					<div>
-						<a class="get" th:href="${board.boardnum}">[[${board.boardtitle}]]</a>
+						<a class="get" th:href="${board.boardnum}">
+							<sup class="new" th:if="${board.isNew}">New</sup>
+							[[${board.boardtitle}]]
+						</a>
 					</div>
 					<div>[[${board.userid}]]</div>
-					<div>[[${board.regdate}]]</div>
+					<div>[[${board.regdate}]]<th:block th:if="${board.regdate != board.updatedate}">(수정됨)</th:block></div>
 					<div>[[${board.readcount}]]</div>
 				</div>
 			</div>
@@ -74,16 +73,16 @@
 		<div class="search_area">
 			<form name="searchForm" id="searchForm" action="/board/list">
 				<select name="type" id="type">
-					<option value="">검색</option>
-					<option value="T" selected>제목</option>
-					<option value="C">내용</option>
-					<option value="W">작성자</option>
-					<option value="TC">제목 또는 내용</option>
-					<option value="TW">제목 또는 작성자</option>
-					<option value="TCW">제목 또는 내용 또는 작성자</option>
+					<option value="" th:selected="${pageMaker.cri.type == null}">검색</option>
+					<option value="T" th:selected="${pageMaker.cri.type == 'T'}">제목</option>
+					<option value="C" th:selected="${pageMaker.cri.type == 'C'}">내용</option>
+					<option value="W" th:selected="${pageMaker.cri.type == 'W'}">작성자</option>
+					<option value="TC" th:selected="${pageMaker.cri.type == 'TC'}">제목 또는 내용</option>
+					<option value="TW" th:selected="${pageMaker.cri.type == 'TW'}">제목 또는 작성자</option>
+					<option value="TCW" th:selected="${pageMaker.cri.type == 'TCW'}">제목 또는 내용 또는 작성자</option>
 				</select>
-				<input type="search" id="keyword" name="keyword" value="지우개">
-				<a id="search-btn" class="btn" onclick="">검색</a>
+				<input type="search" id="keyword" name="keyword" th:value="${pageMaker.cri.keyword}">
+				<a id="search-btn" class="btn" onclick="handleSearchBtn()">검색</a>
 				<input type="hidden" name="pagenum" th:value="${pageMaker.cri.pagenum}">
 				<input type="hidden" name="amount" th:value="${pageMaker.cri.amount}">
 			</form>
@@ -124,6 +123,12 @@
 	function handleClickWrite(){
 		const form = document.searchForm;
 		form.action = "/board/write";
+		form.submit();
+	}
+	function handleSearchBtn(){
+		const form = document.searchForm;
+		//유효성 검사
+		form.pagenum.value = 1;
 		form.submit();
 	}
 	
