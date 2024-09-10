@@ -979,6 +979,7 @@ img.thumbnail{
 }
 .reply_line > .replyForm > div:nth-child(3){
 	width:15%;
+	padding: 30px 0px 30px 0px;
 }
 .reply_line > .replyForm > div > input[type=text]{
 	display: inline-block;
@@ -997,9 +998,10 @@ img.thumbnail{
 .replyForm > div > .btn{
 	height:fit-content;
 	padding:8px;
+	margin-bottom: 10px;
 }
 .replyForm > div > .finish{
-	margin-top:50px; margin-bottom: 20px;
+	margin-top:20px; margin-bottom: 20px;
 	vertical-align: middle;
 }
 .replies{

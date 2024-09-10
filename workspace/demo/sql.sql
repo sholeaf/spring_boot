@@ -32,8 +32,16 @@ create table t_file(
     boardnum bigint
 );
 
-
-
+drop table t_reply;
+create table t_reply(
+	replynum bigint primary key auto_increment,
+    replycontents varchar(3000),
+    regdate datetime default now(),
+    updatedate datetime default now(),
+    boardnum bigint,
+    userid varchar(300)
+);
+select * from t_reply;
 
 
 
