@@ -8,7 +8,8 @@
 <body class="write">
 	<div id="wrap">
 		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
-		<form id="boardForm" method="post" name="boardForm" action="/board/write">
+											<!-- 파일 데이터를 전송 시 enctype에 multipart/form-data 작성 -->
+		<form id="boardForm" method="post" name="boardForm" action="/board/write" enctype="multipart/form-data">
 			<table border="1">
 				<tr>
 					<th>제목</th>
@@ -36,8 +37,8 @@
 							<span id="file0name">선택된 파일 없음</span>
 						</div>
 						<div>
-							<a class="btn">파일 선택</a>
-							<a class="btn">첨부 삭제</a>
+							<a class="btn" href="javascript:upload(0)">파일 선택</a>
+							<a class="btn" href="javascript:cancelFile(0)">첨부 삭제</a>
 						</div>
 					</td>
 				</tr>
@@ -64,6 +65,93 @@
 		const boardForm = document.boardForm;
 		//유효성 검사
 		boardForm.submit();
+	}
+	//현재 업로드 된 파일의 개수(가장 마지막 행 번호)
+	let i = 0;
+	
+	function upload(num){
+		$("#file"+num).click();
+	}
+	//$(선택자).change(함수) : 해당 선택자의 요소에 변화가 일어난다면 넘겨주는 함수 호출
+	$("[type=file]").change(function(e){
+		//e : 파일이 업로드 된 상황 자체를 담고 있는 이벤트 객체
+		//e.target : 파일이 업로드가 된 input[type=file] 객체(태그 객체)
+		const fileTag = e.target;
+		//fileTag.files : 파일태그에 업로드가 된 파일들의 배열
+		const file = fileTag.files[0];
+		
+		if(file == undefined){
+			//기존에 업로드 된 파일 태그에서 새롭게 업로드 창을 띄웠다가 취소를 누른 경우(파일이 업로드 되었다가 없어진 경우)
+			//'fil' '0'
+			cancelFile(fileTag.id.split("e")[1])
+			return;
+		}
+		
+		//file0name 아이디를 가진 요소를 찾아 내부 텍스트를 파일의 이름으로 변경
+		document.getElementById(fileTag.id+"name").innerHTML = file.name;
+		
+		//업로드 된 파일의 확장자명
+		$("."+fileTag.id+"_cont .thumbnail").remove();
+		
+		let ext = file.name.split(".").pop();
+		if(ext == "jpeg" || ext == "png" || ext == "jpg" || ext == "webp" || ext == "gif"){
+			const reader = new FileReader();
+			reader.onload = function(ie){
+				const img = document.createElement("img");
+				img.setAttribute("src",ie.target.result);
+				img.setAttribute("class","thumbnail");
+				document.querySelector("."+fileTag.id+"_cont").appendChild(img);
+			}
+			reader.readAsDataURL(file);
+		}
+		
+		
+		
+		//가장 마지막에 있는 [파일 선택] 버튼을 클릭했을 때
+		if(fileTag.id == "file"+i){
+			const cloneElement = $(".r"+i).clone(true);
+			i++;
+			cloneElement.attr("class","r"+i);
+			cloneElement.children("th").text("파일 첨부"+(i+1));
+			cloneElement.children("td").attr("class","file"+i+"_cont");
+			
+			cloneElement.find("[type='file']").attr("id","file"+i);
+			cloneElement.find("[type='file']").val("");
+			
+			cloneElement.find("span").attr("id","file"+i+"name");
+			cloneElement.find("span").text("선택된 파일 없음");
+			
+			cloneElement.find("a")[0].href = `javascript:upload(${i})`;
+			cloneElement.find("a")[1].href = `javascript:cancelFile(${i})`;
+			
+			//jQuery객체.appendTo("부모선택자") : 해당 선택자의 마지막 자식으로 jQery 객체 추가
+			cloneElement.appendTo("#boardForm tbody");
+		}
+	})
+	function cancelFile(num){
+		//파일 업로드 창을 열어서 취소를 눌러 삭제하는 경우에는 num 변수에 문자열로 넘어온다.
+		num = Number(num);
+		//가장 마지막 [첨부 삭제] 버튼을 클릭한 경우
+		if(num == i) { return; }
+		//tr 지우기
+		$(".r"+num).remove();
+		//지워진 다음 행(num+1)부터 마지막 행(i) 까지 숫자 바꿔주기
+		for(let j=num+1;j<=i;j++){
+			const el = $("#boardForm tbody .r"+j)
+			console.log(el);
+			el.attr("class","r"+(j-1));
+			
+			el.find("th").text("파일 첨부"+j);
+			el.find("td").attr("class","file"+(j-1)+"_cont");
+			
+			el.find("[type=file]").attr("id","file"+(j-1));
+			
+			el.find("span").attr("id","file"+(j-1)+"name");
+			
+			el.find("a")[0].href = `javascript:upload(${j-1})`;
+			el.find("a")[1].href = `javascript:cancelFile(${j-1})`;
+		}
+		i--;
 	}
 </script>
 </html>

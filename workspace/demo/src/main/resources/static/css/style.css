@@ -898,6 +898,11 @@ img.thumbnail{
 	display: block;
 	width:200px;
 	clear:both;
+	transition: all 0.1s linear;
+}
+img.thumbnail:hover{
+	transform: scale(1.4);
+	box-shadow: 1px 1px 4px black;
 }
 .write .btn_area, .modify .btn_area{
 	justify-content: flex-end;	
@@ -1043,6 +1048,16 @@ img.thumbnail{
 	height:fit-content;
 	margin: 5px auto;
 	padding:5px 0;
+}
+.replies .mdf{
+	resize: none;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	padding: 5px 10px;
+	width: 100%;
+	height: 50px;
+	outline: none;
+	overflow: hidden;
 }
 .page{
 	display: flex;

@@ -1,0 +1,20 @@
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.FileMapper">
+	<insert id="insertFile">
+		insert into t_file values(#{systemname},#{orgname},#{boardnum})
+	</insert>
+	<select id="getFileBySystemname">
+		select * from t_file where systemname=#{systemname}
+	</select>
+	<select id="getFiles">
+		select * from t_file where boardnum=#{boardnum}
+	</select>
+	<delete id="deleteFileBySystemname">
+		delete from t_file where systemname=#{systemname}
+	</delete>
+	<delete id="deleteFilesByBoardnum">
+		delete from t_file where boardnum=#{boardnum}
+	</delete>
+</mapper>

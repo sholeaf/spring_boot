@@ -8,4 +8,8 @@ public interface ReplyService {
 	public ReplyDTO regist(ReplyDTO reply);
 
 	public ReplyPageDTO getList(Criteria cri, long boardnum);
+
+	public boolean remove(long replynum);
+
+	public boolean modify(ReplyDTO reply);
 }

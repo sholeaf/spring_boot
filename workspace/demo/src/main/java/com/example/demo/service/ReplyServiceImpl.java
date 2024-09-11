@@ -34,7 +34,30 @@ public class ReplyServiceImpl implements ReplyService{
 		
 		return dto;
 	}
+	
+	@Override
+	public boolean remove(long replynum) {
+		return rmapper.deleteReply(replynum) == 1;
+	}
+	
+	@Override
+	public boolean modify(ReplyDTO reply) {
+		ReplyDTO rdto = rmapper.getDetail(reply.getReplynum());
+		if(rdto.getUserid().equals(reply.getUserid())) {
+			return rmapper.updateReply(reply) == 1;
+		}
+		return false;
+	}
 }
+
+
+
+
+
+
+
+
+
 
 
 

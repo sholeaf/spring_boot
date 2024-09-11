@@ -15,4 +15,12 @@ public interface ReplyMapper {
 
 	long getTotal(long boardnum);
 	List<ReplyDTO> getList(Criteria cri, long boardnum);
+
+	int deleteReply(long replynum);
+
+	ReplyDTO getDetail(long replynum);
+
+	int updateReply(ReplyDTO reply);
+
+	int getRecentReplyCnt(long boardnum);
 }

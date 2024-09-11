@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.domain.BoardDTO;
 import com.example.demo.domain.Criteria;
@@ -54,8 +55,8 @@ public class BoardController {
 	}
 	
 	@PostMapping("write")
-	public String write(BoardDTO board, HttpServletResponse resp) {
-		if(service.regist(board)) {
+	public String write(BoardDTO board, MultipartFile[] files, HttpServletResponse resp) throws Exception{
+		if(service.regist(board,files)) {
 			Cookie cookie = new Cookie("w", "t");
 			cookie.setPath("/");
 			cookie.setMaxAge(5);

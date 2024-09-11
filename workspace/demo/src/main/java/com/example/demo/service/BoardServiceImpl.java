@@ -1,22 +1,36 @@
 package com.example.demo.service;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.domain.BoardDTO;
 import com.example.demo.domain.Criteria;
+import com.example.demo.domain.FileDTO;
 import com.example.demo.mapper.BoardMapper;
+import com.example.demo.mapper.FileMapper;
+import com.example.demo.mapper.ReplyMapper;
 
 @Service
 public class BoardServiceImpl implements BoardService{
 
+	@Value("${file.dir}")
+	private String saveFolder;
+	
 	@Autowired
 	private BoardMapper bmapper;
+	@Autowired
+	private ReplyMapper rmapper;
+	@Autowired
+	private FileMapper fmapper;
 	
 	@Override
 	public List<BoardDTO> getList(Criteria cri) {
@@ -35,6 +49,12 @@ public class BoardServiceImpl implements BoardService{
 			if(elapsedHours < 2) {
 				board.setNew(true);
 			}
+			long replyCnt = rmapper.getTotal(board.getBoardnum());
+			board.setReplyCnt(replyCnt);
+			int recentReplyCnt = rmapper.getRecentReplyCnt(board.getBoardnum());
+			if(recentReplyCnt > 5) {
+				board.setHot(true);
+			}
 		}
 		return list;
 	}
@@ -45,8 +65,50 @@ public class BoardServiceImpl implements BoardService{
 	}
 
 	@Override
-	public boolean regist(BoardDTO board) {
-		return bmapper.insertBoard(board) == 1;
+	public boolean regist(BoardDTO board, MultipartFile[] files) throws Exception{
+		if(bmapper.insertBoard(board) != 1) {
+			return false;
+		}
+		if(files == null || files.length == 0) {
+			return true;
+		}
+		else {
+			//방금 등록한 게시글 번호
+			long boardnum = bmapper.getLastNum(board.getUserid());
+			System.out.println("파일 개수 : "+files.length);
+			
+			for(int i=0;i<files.length-1;i++) {
+				MultipartFile file = files[i];
+				
+				//apple.png
+				String orgname = file.getOriginalFilename();
+				//5
+				int lastIdx = orgname.lastIndexOf(".");
+				//.png
+				String ext = orgname.substring(lastIdx);
+				
+				LocalDateTime now = LocalDateTime.now();
+				//20240911161030123
+				String time = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+				//20240911161030123랜덤문자열.png
+				String systemname = time+UUID.randomUUID().toString()+ext;
+				
+				//실제 생성될 파일의 경로
+				// D:/0900_GB_JDS/6_spring/file/20240911161030123랜덤문자열.png
+				String path = saveFolder+systemname;
+				
+				//FileDTO 로 DB에 업로드 될 파일의 정보들 저장
+				FileDTO fdto = new FileDTO();
+				fdto.setOrgname(orgname);
+				fdto.setSystemname(systemname);
+				fdto.setBoardnum(boardnum);
+				fmapper.insertFile(fdto);
+				
+				//실제 파일 업로드
+				file.transferTo(new File(path));
+			}
+			return true;
+		}
 	}
 	
 	@Override

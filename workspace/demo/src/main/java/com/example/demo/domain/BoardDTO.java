@@ -12,4 +12,6 @@ public class BoardDTO {
 	private int readcount;
 	private String userid;
 	private boolean isNew;
+	private boolean isHot;
+	private long replyCnt;
 }

@@ -24,13 +24,33 @@ const replyService = {
 			}
 		)
 	},
-	delete:function(){
-		
+	delete:function(replynum,callback){
+		$.ajax({
+			url:`/reply/${replynum}`,
+			type:"DELETE",
+			success:function(result){
+				callback(result);
+			}
+		})
 	},
-	update:function(){
-		
+	update:function(reply, callback){
+		$.ajax({
+			url:`/reply/${reply.replynum}`,
+			type:"PUT",
+			data:JSON.stringify(reply),
+			contentType:"application/json;charset=utf-8",
+			success:function(result){
+				callback(result);
+			}
+		})
 	}
 }
+
+
+
+
+
+
 
 
 

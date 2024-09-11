@@ -16,6 +16,22 @@
 	<select id="getList">
 		select * from t_reply where boardnum=#{boardnum} limit #{cri.startrow},#{cri.amount}
 	</select>
+	<select id="getDetail">
+		select * from t_reply where replynum = #{replynum}
+	</select>
+	<select id="getRecentReplyCnt">
+		<![CDATA[ 
+			select count(*) from t_reply where boardnum=#{boardnum} and timestampdiff(HOUR,regdate,now()) < 1
+		]]>
+	</select>
+	<update id="updateReply">
+		update t_reply
+		set replycontents = #{replycontents}, updatedate = now()
+		where replynum=#{replynum}
+	</update>
+	<delete id="deleteReply">
+		delete from t_reply where replynum=#{replynum}
+	</delete>
 </mapper>
 
 

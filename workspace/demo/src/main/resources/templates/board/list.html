@@ -34,7 +34,8 @@
 					<div>
 						<a class="get" th:href="${board.boardnum}">
 							<sup class="new" th:if="${board.isNew}">New</sup>
-							[[${board.boardtitle}]]
+							<sup class="hot" th:if="${board.isHot}">Hot</sup>
+							[[${board.boardtitle}]]<span id="reply_cnt" th:text="${'[' + board.replyCnt + ']'}"></span>
 						</a>
 					</div>
 					<div>[[${board.userid}]]</div>
