@@ -32,7 +32,14 @@
 	<delete id="deleteReply">
 		delete from t_reply where replynum=#{replynum}
 	</delete>
+	<delete id="deleteRepliesByBoardnum">
+		delete from t_reply where boardnum=#{boardnum}
+	</delete>
 </mapper>
+
+
+
+
 
 
 

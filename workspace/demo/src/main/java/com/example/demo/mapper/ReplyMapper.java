@@ -17,6 +17,7 @@ public interface ReplyMapper {
 	List<ReplyDTO> getList(Criteria cri, long boardnum);
 
 	int deleteReply(long replynum);
+	int deleteRepliesByBoardnum(long boardnum);
 
 	ReplyDTO getDetail(long replynum);
 

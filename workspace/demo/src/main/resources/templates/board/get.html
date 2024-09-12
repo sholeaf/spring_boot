@@ -14,22 +14,41 @@
 	<div id="wrap" class="get">
 		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
 		<table border="1" class="board_area">
-			<tr>
-				<th>제목</th>
-				<td id="boardtitle">[[${board.boardtitle}]]</td>
-			</tr>
-			<tr>
-				<th>작성자</th>
-				<td id="userid">[[${board.userid}]]</td>
-			</tr>
-			<tr>
-				<th>조회수</th>
-				<td id="readcount">[[${board.readcount}]]</td>
-			</tr>
-			<tr>
-				<th>내용</th>
-				<td id="boardcontents">[[${board.boardcontents}]]</td>
-			</tr>
+			<tbody>
+				<tr>
+					<th>제목</th>
+					<td id="boardtitle">[[${board.boardtitle}]]</td>
+				</tr>
+				<tr>
+					<th>작성자</th>
+					<td id="userid">[[${board.userid}]]</td>
+				</tr>
+				<tr>
+					<th>조회수</th>
+					<td id="readcount">[[${board.readcount}]]</td>
+				</tr>
+				<tr>
+					<th>내용</th>
+					<td id="boardcontents">[[${board.boardcontents}]]</td>
+				</tr>
+				<tr th:each="file:${files}" th:if="${files != null and files.size() > 0}">
+					<th>첨부파일[[${fileStat.index+1}]]</th>
+					<td>
+						<a th:href="@{'/file/download' (systemname=${file.systemname}, orgname=${file.orgname})}">[[${file.orgname}]]</a>
+						<!-- th:with - 일종의 변수 선언 -->
+						<th:block th:with="sar=${file.systemname.split('[.]')}">
+							<th:block th:with="ext = ${sar[sar.length-1]}">
+								<img class="thumbnail" th:if="${ext == 'jpg' or ext == 'png'
+								 or ext == 'jpeg' or ext == 'gif' or ext == 'webp'}"
+								 th:src="${'/file/thumbnail?systemname='+file.systemname}">
+							</th:block>
+						</th:block>
+					</td>
+				</tr>
+				<tr th:if="${files == null or files.size() == 0}" class="no-file">
+					<td colspan="2">첨부 파일이 없습니다.</td>
+				</tr>
+			</tbody>
 		</table>
 		<table class="btn_area">
 			<tbody>

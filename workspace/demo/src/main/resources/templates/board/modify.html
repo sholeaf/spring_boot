@@ -33,6 +33,42 @@
 						<textarea name="boardcontents">[[${board.boardcontents}]]</textarea>
 					</td>
 				</tr>
+				<tr th:class="${'r'+fileStat.index}" th:each="file:${files}">
+					<th>파일 첨부[[${fileStat.index+1}]]</th>
+					<td th:class="${'file'+fileStat.index+'_cont'}">
+						<div>
+							<input type="file" name="files" th:id="${'file'+fileStat.index}" style="display:none">
+							<input type="hidden" name="systemname" th:value="${file.systemname}">
+							<span class="orgname" th:id="${'file'+fileStat.index+'name'}">[[${file.orgname}]]</span>
+						</div>
+						<div>
+							<a class="btn" th:href="'javascript:upload('+${fileStat.index}+',\''+${file.systemname}+'\')'">파일 선택</a>
+							<a class="btn" th:href="'javascript:cancelFile('+${fileStat.index}+',\''+${file.systemname}+'\')'">첨부 삭제</a>
+						</div>
+						<th:block th:with="sar=${file.systemname.split('[.]')}">
+							<th:block th:with="ext = ${sar[sar.length-1]}">
+								<img class="thumbnail" th:if="${ext == 'jpg' or ext == 'png'
+								 or ext == 'jpeg' or ext == 'gif' or ext == 'webp'}"
+								 th:src="${'/file/thumbnail?systemname='+file.systemname}">
+							</th:block>
+						</th:block>
+					</td>
+				</tr>
+				<th:block th:with="len=${files.size()}">
+					<tr th:class="${'r'+len}">
+						<th>파일 첨부[[${len+1}]]</th>
+						<td th:class="${'file'+len+'_cont'}">
+							<div>
+								<input type="file" name="files" th:id="${'file'+len}" style="display:none">
+								<span th:id="${'file'+len+'name'}">선택된 파일 없음</span>
+							</div>
+							<div>
+								<a class="btn" th:href="${'javascript:upload('+len+')'}">파일 선택</a>
+								<a class="btn" th:href="${'javascript:cancelFile('+len+')'}">첨부 삭제</a>
+							</div>
+						</td>
+					</tr>
+				</th:block>
 			</table>
 			<input type="hidden" value="" name="updateCnt" id="updateCnt">
 		</form>
@@ -56,10 +92,197 @@
 	
 	function sendit(){
 		//유효성 검사
+		//deleteFiles 배열을 Set으로 변환하여 중복되는 값들을 제거
+		const set = new Set(deleteFiles);
+		//다시 set에 있는 요소들을 꺼내서 배열로 만들어서 deleteFiles에 넣기
+		deleteFiles = [...set];
+		//deleteFiles에서 undefined 값 제거하기
+		deleteFiles = deleteFiles.filter((item) => { return item != undefined })
+		$("#updateCnt").val(deleteFiles.join("\\"));
 		document.boardForm.submit();
+	}
+	//i : 현재까지 업로드 된 파일의 개수
+	//files.size() : 원래 업로드 되어있는 파일의 개수
+	let i = /*[[${files.size()}]]*/'';
+	let orgSize = i;
+
+	//로직 구성을 위한 임시 배열(막 사용되며 막 바뀔 배열)
+	let util_arr = null;
+	
+	util_arr = document.getElementsByClassName("orgname");	
+	//기존에 업로드 되어있는 파일들의 systemname 들을 담고 있는 배열
+	const systemnames = [];
+	//기존에 업로드 되어있는 파일들의 orgname 들을 담고 있는 배열
+	const orgnames = [];
+	for(let j=0;j<i;j++){
+		systemnames.push(util_arr[j].previousElementSibling.value);
+		orgnames.push(util_arr[j].innerText.trim());
+	}
+	console.log(systemnames,orgnames)
+	
+	//기존에 업로드 되어 있던 파일들 중 현재 변화를 시켜줄 파일의 이름
+	let temp_sysname = "";
+	//사용자가 수정하게 될 파일들의 이름들을 임시로 저장하는 배열
+	let deleteFiles = [];
+	
+	function upload(num,systemname){
+		if(systemname == undefined){
+			//기존 파일을 건드리지 않고 새롭게 업로드
+			$("#file"+num).click();
+		}
+		else{
+			//기존 파일을 건드리면서 업로드 버튼 클릭
+			//변화 시켜줄 파일의 이름을 임시 저장
+			temp_sysname = systemname;
+
+			$("#file"+num).click();
+		}
+	}
+	$("[type=file]").change(function(e){
+		//e : 파일이 업로드 된 상황 자체를 담고 있는 이벤트 객체
+		//e.target : 파일이 업로드가 된 input[type=file] 객체(태그 객체)
+		const fileTag = e.target;
+		//fileTag.files : 파일태그에 업로드가 된 파일들의 배열
+		const file = fileTag.files[0];
+		const num = Number(fileTag.id.split("e")[1]);
+		
+		//파일을 올렸다가 취소한 경우
+		if(file == undefined){
+			//새로운 파일 첨부란을 건드렸다가 취소한 경우
+			if(temp_sysname == ''){
+				cancelFile(num)
+				return;
+			}
+			//기존 파일 첨부란을 건드렸다가 취소한 경우
+			else{
+				//기존 파일의 orgname 추출
+				let orgname = orgnames[num];
+				//기존 파일을 변경했을 때 변경된 파일이 이미지 파일이면 썸네일이 생성되어 있음.
+				//따라서 원래대로 돌아가기 위해 생성되었던 썸네일 제거
+				$("."+fileTag.id+"_cont .thumbnail").remove();
+				//원래대로 돌아갈 파일의 systemname으로 확장자 추출
+				let ext = systemnames[num].split(".").pop();
+				//그림 파일이라면
+				if(ext == "jpeg" || ext == "jpg" || ext == "gif" || ext == "png" || ext == "webp"){
+					//썸네일 생성
+					const img = document.createElement("img");
+					img.setAttribute("src","/file/thumbnail?systemname="+systemnames[num]);
+					img.setAttribute("class","thumbnail");
+					document.querySelector("."+fileTag.id+"_cont").appendChild(img);
+				}
+				//파일명이 뜨는 span태그 내부 텍스트로 기존 파일의 orgname을 넣기(원래대로 되돌리기)
+				$(`#file${num}name`).text(orgname);
+				
+				//기존 파일을 건드렸다가 취소했으므로, 기존 파일은 지워지면 안 된다.(deleteFiles에 임시 저장했던 기존 파일명은 없애주어야 한다.)
+				for(let j=0;j<deleteFiles.length;j++){
+					if(deleteFiles[j] == systemnames[num]){
+						//일단 수정 취소한 파일명이 담겨있는 방에는 undefined 넣어주기
+						deleteFiles[j] = undefined;
+					}
+				}
+			}
+		}
+		//파일이 없었다가 생긴 경우, 파일이 있었는데 다른 파일로 변경된 경우
+		else{
+			//기존 파일 첨부란을 눌러서 새로운 파일을 업로드 했을 경우
+			console.log("temp_sysname",temp_sysname);
+			if(temp_sysname != ''){
+				//변화될 파일명(삭제되어야 할 수도 있는 파일명)을 deleteFiles 배열에 추가
+				deleteFiles.push(temp_sysname);
+				temp_sysname = '';
+			}
+			document.getElementById(fileTag.id+"name").innerHTML = file.name;
+			
+			//업로드 된 파일의 확장자명
+			$("."+fileTag.id+"_cont .thumbnail").remove();
+			
+			let ext = file.name.split(".").pop();
+			if(ext == "jpeg" || ext == "png" || ext == "jpg" || ext == "webp" || ext == "gif"){
+				const reader = new FileReader();
+				reader.onload = function(ie){
+					const img = document.createElement("img");
+					img.setAttribute("src",ie.target.result);
+					img.setAttribute("class","thumbnail");
+					document.querySelector("."+fileTag.id+"_cont").appendChild(img);
+				}
+				reader.readAsDataURL(file);
+			}
+			
+			//가장 마지막에 있는 [파일 선택] 버튼을 클릭했을 때
+			if(fileTag.id == "file"+i){
+				const cloneElement = $(".r"+i).clone(true);
+				i++;
+				cloneElement.attr("class","r"+i);
+				cloneElement.children("th").text("파일 첨부"+(i+1));
+				cloneElement.children("td").attr("class","file"+i+"_cont");
+				
+				cloneElement.find("[type='file']").attr("id","file"+i);
+				cloneElement.find("[type='file']").val("");
+				
+				cloneElement.find("span").attr("id","file"+i+"name");
+				cloneElement.find("span").text("선택된 파일 없음");
+				
+				cloneElement.find("a")[0].href = `javascript:upload(${i})`;
+				cloneElement.find("a")[1].href = `javascript:cancelFile(${i})`;
+				
+				//jQuery객체.appendTo("부모선택자") : 해당 선택자의 마지막 자식으로 jQery 객체 추가
+				cloneElement.appendTo("#boardForm tbody");
+			}
+		}
+	})
+	
+	function cancelFile(num,systemname){
+		//파일 업로드 창을 열어서 취소를 눌러 삭제하는 경우에는 num 변수에 문자열로 넘어온다.
+		num = Number(num);
+		//가장 마지막 [첨부 삭제] 버튼을 클릭한 경우
+		if(num == i) { return; }
+		//넘겨준 systemname을 일단 deleteFiles 배열에 추가
+		//기존 파일을 삭제하는 경우라면 ? systemname : 기존 파일의 systemname
+		//새롭게 추가했던 파일을 삭제하는 경우라면 ? systemname : undefined
+		deleteFiles.push(systemname);
+		//삭제하려는 행 번호(num)가 orgSize보다 작다면 기존에 업로드 되어있었던 파일을 삭제하는 경우
+		if(num < orgSize){
+			//원본 파일들의 orgname과 systemname을 저장하고 있던 배열에서 해당 파일의 정보들을 삭제
+			orgnames.splice(num,1);
+			systemnames.splice(num,1);
+		}
+		//tr 지우기
+		$(".r"+num).remove();
+		//지워진 다음 행(num+1)부터 마지막 행(i) 까지 숫자 바꿔주기
+		for(let j=num+1;j<=i;j++){
+			const el = $("#boardForm tbody .r"+j)
+			el.attr("class","r"+(j-1));
+			
+			el.find("th").text("파일 첨부"+j);
+			el.find("td").attr("class","file"+(j-1)+"_cont");
+			
+			el.find("[type=file]").attr("id","file"+(j-1));
+			
+			el.find("span").attr("id","file"+(j-1)+"name");
+			
+			//만약 지워진 다음 행들 중에 systemname이 있었다면 upload(행번호,'apple.png') 형태로 a 태그의 href를 달아주어야 함
+			//따라서 systemname 값을 그대로 연결하면 upload(행번호,apple.png) 형태로 달리기 때문에(따옴표 없이)
+			//문자열 값으로 달아주기 위해 systemname이 존재하는 경우에는 양 옆에 ' 를 연결해주는 작업
+			let systemname = systemnames[j-1] == undefined ? undefined : "'" + systemnames[j-1] + "'"
+			
+			el.find("a")[0].href = `javascript:upload(${j-1},${systemname})`;
+			el.find("a")[1].href = `javascript:cancelFile(${j-1},${systemname})`;
+		}
+		i--;
 	}
 </script>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 
 
 

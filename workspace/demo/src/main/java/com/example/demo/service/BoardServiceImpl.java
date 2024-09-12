@@ -137,7 +137,29 @@ public class BoardServiceImpl implements BoardService{
 	
 	@Override
 	public boolean remove(long boardnum) {
-		return bmapper.deleteBoard(boardnum) == 1;
+		if(bmapper.deleteBoard(boardnum) == 1) {
+			rmapper.deleteRepliesByBoardnum(boardnum);
+			List<FileDTO> files = fmapper.getFiles(boardnum);
+			//게시글에 달린 파일의 정보들을 하나씩 꺼내오며
+			for(FileDTO fdto : files) {
+				//saveFolder(파일이 저장되는 폴더)에서 꺼내온 DTO의 systemname에 해당하는 파일을 자바의 객체로 가져옴
+				File file = new File(saveFolder,fdto.getSystemname());
+				//그 파일이 존재한다면
+				if(file.exists()) {
+					//삭제
+					file.delete();
+					//DB상에서도 삭제
+					fmapper.deleteFileBySystemname(fdto.getSystemname());
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	@Override
+	public List<FileDTO> getFiles(long boardnum) {
+		return fmapper.getFiles(boardnum);
 	}
 	
 }

@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.domain.BoardDTO;
 import com.example.demo.domain.Criteria;
+import com.example.demo.domain.FileDTO;
 
 public interface BoardService {
 	List<BoardDTO> getList(Criteria cri);
@@ -16,4 +17,5 @@ public interface BoardService {
 	void increaseReadCount(long boardnum);
 	boolean modify(BoardDTO board);
 	boolean remove(long boardnum);
+	List<FileDTO> getFiles(long boardnum);
 }

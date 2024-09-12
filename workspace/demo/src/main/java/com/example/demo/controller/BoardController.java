@@ -115,17 +115,19 @@ public class BoardController {
 			}
 		}
 		model.addAttribute("board",board);
+		model.addAttribute("files",service.getFiles(boardnum));
 		return "/board/get";
 	}
 	
 	@GetMapping("modify")
 	public void modify(Criteria cri, long boardnum, Model model) {
 		model.addAttribute("board",service.getDetail(boardnum));
+		model.addAttribute("files",service.getFiles(boardnum));
 		model.addAttribute("cri",cri);
 	}
 	
 	@PostMapping("modify")
-	public String modify(BoardDTO board,Criteria cri) {
+	public String modify(BoardDTO board, MultipartFile[] files, String updateCnt, Criteria cri) {
 		if(service.modify(board)) {
 			
 		}
