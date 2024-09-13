@@ -8,7 +8,7 @@
 <body class="modify">
 	<div id="wrap" class="modify">
 		<th:block th:replace="~{layout/header::header(${session.loginUser})}"></th:block>
-		<form id="boardForm" method="post" name="boardForm" action="/board/modify">
+		<form id="boardForm" method="post" name="boardForm" action="/board/modify" enctype="multipart/form-data">
 			<input type="hidden" name="boardnum" th:value="${board.boardnum}">
 			<input type="hidden" name="pagenum" th:value="${cri.pagenum}">
 			<input type="hidden" name="amount" th:value="${cri.amount}">
@@ -99,6 +99,7 @@
 		//deleteFiles에서 undefined 값 제거하기
 		deleteFiles = deleteFiles.filter((item) => { return item != undefined })
 		$("#updateCnt").val(deleteFiles.join("\\"));
+		//console.log(deleteFiles)
 		document.boardForm.submit();
 	}
 	//i : 현재까지 업로드 된 파일의 개수
@@ -127,6 +128,7 @@
 	
 	function upload(num,systemname){
 		if(systemname == undefined){
+			temp_sysname = "";
 			//기존 파일을 건드리지 않고 새롭게 업로드
 			$("#file"+num).click();
 		}

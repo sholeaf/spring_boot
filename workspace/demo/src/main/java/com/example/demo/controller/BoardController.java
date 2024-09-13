@@ -127,8 +127,8 @@ public class BoardController {
 	}
 	
 	@PostMapping("modify")
-	public String modify(BoardDTO board, MultipartFile[] files, String updateCnt, Criteria cri) {
-		if(service.modify(board)) {
+	public String modify(BoardDTO board, MultipartFile[] files, String updateCnt, Criteria cri) throws Exception{
+		if(service.modify(board,files,updateCnt)) {
 			
 		}
 		else {

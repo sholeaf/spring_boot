@@ -4,6 +4,8 @@ import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -131,8 +133,78 @@ public class BoardServiceImpl implements BoardService{
 	}
 
 	@Override
-	public boolean modify(BoardDTO board) {
-		return bmapper.updateBoard(board) == 1;
+	public boolean modify(BoardDTO board, MultipartFile[] files, String updateCnt) throws Exception {
+		System.out.println(files);
+		if(bmapper.updateBoard(board) != 1) {
+			return false;
+		}
+		List<FileDTO> orgFileList = fmapper.getFiles(board.getBoardnum());
+		if(orgFileList.size() == 0 && (files == null || files.length == 0)) {
+			return true;
+		}
+		else {
+			if(files != null && files.length != 0) {
+				boolean flag = false;
+				//후에 비즈니스 로직 실패 시 원래대로 복구하기 위해 업로드 성공했던 파일들도 삭제해 주어야 한다.
+				//업로드 성공한 파일들의 이름을 해당 리스트에 추가하면서 로직을 진행한다.
+				ArrayList<String> sysnames = new ArrayList<>();
+				for (int i = 0; i < files.length-1; i++) {
+					MultipartFile file = files[i];
+					String orgname = file.getOriginalFilename();
+					//수정의 경우 중간에 있는 파일이 수정되지 않은 경우도 있다.(원본 파일 그대로 둔 경우)
+					//그런 경우 file의 orgname은 null 이거나 "" 이다.
+					//따라서 파일 처리를 할 필요가 없으므로 반복문을 넘어간다.
+					if(orgname == null || orgname.equals("")) {
+						continue;
+					}
+					//파일 업로드 과정(regist와 동일)
+					int lastIdx = orgname.lastIndexOf(".");
+					String ext = orgname.substring(lastIdx);
+					LocalDateTime now = LocalDateTime.now();
+					String time = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+					String systemname = time+UUID.randomUUID().toString()+ext;
+					String path = saveFolder+systemname;
+					FileDTO fdto = new FileDTO();
+					fdto.setOrgname(orgname);
+					fdto.setSystemname(systemname);
+					fdto.setBoardnum(board.getBoardnum());
+					flag = fmapper.insertFile(fdto) == 1;
+					file.transferTo(new File(path));
+					
+					//업로드 성공한 파일의 이름(systemname)을 sysnames 리스트에 추가
+					sysnames.add(systemname);
+					
+					if(!flag) {
+						break;
+					}
+				}
+				//강제탈출(DB insert 실패)
+				if(!flag) {
+					//업로드 했던 파일 삭제, 게시글 데이터 돌려놓기, 파일 data(실제 파일) 삭제, ...
+					//아까 추가했던 systemname들(업로드 성공했던 파일의 이름)을 꺼내오면서
+					for(String systemname : sysnames) {
+						//실제 파일이 존재한다면 삭제
+						File file = new File(saveFolder,systemname);
+						if(file.exists()) {
+							file.delete();
+						}
+						//DB상에서도 삭제
+						fmapper.deleteFileBySystemname(systemname);
+					}
+					//board 원래대로 돌리기
+				}
+			}
+			//지워져야 할 파일(기존에 있었던 파일들 중 수정된 파일)들의 이름 추출
+			String[] deleteNames = updateCnt.split("\\\\");
+			for(String systemname : deleteNames) {
+				File file = new File(saveFolder,systemname);
+				if(file.exists()) {
+					file.delete();
+				}
+				fmapper.deleteFileBySystemname(systemname);
+			}
+			return true;
+		}
 	}
 	
 	@Override

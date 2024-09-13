@@ -662,25 +662,25 @@ a.write {
 
 .chat-input {
 	width: 350px;
+	height: 50px;
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+	border: 1px solid #ccc;
+	border-top: none;
+	background: #f4f7f9;
 }
 
 #chat-input {
 	box-sizing: border-box;
-	width: 299px;
-	position: relative;
-	height: 46px;
+	width: 100%;
+	height: 100%;
 	padding-top: 10px;
-	padding-right: 50px;
+	padding-right: 15px;
 	padding-bottom: 10px;
 	padding-left: 15px;
 	border: none;
-	resize: none;
-	outline: none;
 	color: #888;
-	overflow: hidden;
-	border-bottom-right-radius: 5px;
-	border-bottom-left-radius: 5px;
-	background: #f4f7f9;
+	background: transparent;
 }
 
 #chat-input.echo {
@@ -689,7 +689,6 @@ a.write {
 }
 
 .echo-receiver {
-	display: inline-block;
 	width: 0;
 	font-size: 12px;
 	color: deeppink;
@@ -699,14 +698,14 @@ a.write {
 
 .chat-input>form {
 	box-sizing: border-box;
-	margin-bottom: 0;
-	border: 1px solid #ccc;
-	border-top: none;
-	border-bottom-right-radius: 5px;
-	border-bottom-left-radius: 5px;
-	background: #f4f7f9;
 }
-
+#chat-text-box{
+	width:298px;
+	height:50px;
+	position: relative;
+	float:left;
+	border-bottom-left-radius: 5px;
+}
 #chat-input::-webkit-input-placeholder{
 	/* Chrome/Opera/Safari */
 	color : #ccc;
@@ -723,10 +722,17 @@ a.write {
 	/* Firefox 18- */
 	color : #ccc;
 }
+#chat-btn{
+	float:right;
+	width:50px;
+	height: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-bottom-right-radius: 5px;
+	background: transparent;
+}
 .chat-submit{
-	position : absolute;
-	bottom : 6px;
-	right : 10px;
 	background : transparent;
 	box-shadow : none;
 	border : none;

@@ -15,7 +15,7 @@ public interface BoardService {
 	BoardDTO getDetail(long boardnum);
 	long getLastNum(String userid);
 	void increaseReadCount(long boardnum);
-	boolean modify(BoardDTO board);
+	boolean modify(BoardDTO board, MultipartFile[] files, String updateCnt) throws Exception;
 	boolean remove(long boardnum);
 	List<FileDTO> getFiles(long boardnum);
 }

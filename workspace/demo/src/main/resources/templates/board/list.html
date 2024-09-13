@@ -105,13 +105,17 @@
 		</div>
 		<div class="chat-input">
 			<form>
-				<input type="hidden" id="userid" name="userid">
-				<span class="echo-receiver"></span> <input type="text"
-					id="chat-input" placeholder="Send a message..."
-					onkeyup="sendEcho();" />
-				<button type="submit" class="chat-submit" id="chat-submit">
-					<span class="material-symbols-outlined">send</span>
-				</button>
+				<div id="chat-text-box">
+					<input type="hidden" id="userid" name="userid" th:value="${session.loginUser}">
+					<span class="echo-receiver"></span> <input type="text"
+						id="chat-input" placeholder="Send a message..."
+						onkeyup="" />
+				</div>
+				<div id="chat-btn">
+					<button type="submit" class="chat-submit" id="chat-submit">
+						<span class="material-symbols-outlined">send</span>
+					</button>
+				</div>
 			</form>
 		</div>
 	</div>
@@ -149,6 +153,140 @@
 		// /board/get?pagenum=4&amount=10&type=T&keyword=지우개&boardnum=99
 		location.href = '/board/get'+listLink+"&boardnum="+boardnum;
 	})
+	
+	//채팅 구현
+	let socket = null;
+	let INDEX = 0;
+	
+	$("#chat-circle").click(function(){
+		$("#chat-circle").toggle("scale");
+		$(".chat-box").toggle("scale");
+		
+		socket = new WebSocket('ws://localhost:8080/chat/'+$("#userid").val())
+		
+		//소켓 연결에 오류가 발생했을 때 수행할 이벤트
+		socket.onerror = function(e){
+			console.log(e)
+		}
+		//소켓 연결이 열렸을 때 수행할 이벤트
+		socket.onopen = function(e){
+			console.log(e)
+		}
+		//소켓 연결을 통해 메세지가 전달되었을 때 수행할 이벤트
+		socket.onmessage = function(e){
+			console.log(e.data);
+			let sender = e.data.split(":")[0];
+			let msg = e.data.split(":")[1];
+			let str = "";
+			if(sender == "out"){
+				str = `<div class="inout-Msg">${msg}님이 나가셨습니다.</div>`
+				$(".chat-logs").append(str);
+			}
+			else if(sender == "in"){
+				str = `<div class="inout-Msg">${msg}님이 들어오셨습니다.</div>`
+				$(".chat-logs").append(str);				
+			}
+			else{
+				generate_message(msg,'user',sender);
+			}
+		}
+		//소켓 연결을 종료할 때 수행할 이벤트
+		socket.onclose = function(e){
+			console.log(e)
+		}
+		
+	})
+	
+	$("#chat-submit").click(function(e){
+		e.preventDefault();
+		let msg = $("#chat-input").val();
+		msg = msg.trim();
+		
+		socket.send($("#userid").val()+":"+msg);
+		generate_message(msg,'self');
+	})
+	//닫기 버튼을 클릭했을 때 호출될 이벤트, 창 닫기, 소켓 접속 종료
+	$(".chat-box-toggle").click(function(e){
+		$("#chat-circle").toggle("scale");
+		$(".chat-box").toggle("scale");
+		socket.close();
+		socket = null;
+	})
+	
+	//채팅 메세지를 DOM으로 생성하는 함수
+	//msg : 실제 내용이 될 텍스트 / type : 'self'(내가 보낸 모습으로), 'user'(남이 보낸 모습으로)
+	function generate_message(msg,type,sender){
+		INDEX++;
+		var str = "";
+		let receiver = "";
+		let content = "";
+		content = msg;
+		str += "<div id='cm-msg-"+INDEX+"' class=\"chat-msg "+type+"\">";
+		str += "<span class=\"msg-avatar\">";
+		str += "<img src=\"/images/chat_bg.jpeg\">";
+		str += "<\/span>";
+		str += "<div class=\"cm-msg-text\">";
+		str += content;
+		str += "<\/div>";
+		//남이 보낸 메세지를 로그로 찍을 때
+		if(type == 'user'){
+			str += "<div class='receiver'>["+sender+"]</div>";
+		}
+		//내가 보낸 메세지를 로그로 찍을 때
+		else{
+			str += "<div class='receiver'>모두에게</div>"
+		}
+		str += "<\/div>";
+		$(".chat-logs").append(str);
+		$("#cm-msg-" + INDEX).hide().fadeIn(300);
+		if (type == 'self') {
+			$("#chat-input").val('');
+		}
+		$(".chat-logs").stop().animate({
+			scrollTop : $(".chat-logs")[0].scrollHeight
+		}, 1000);
+
+
+		const arMsg = document.getElementsByClassName("cm-msg-text");
+
+		for (let i = 0; i < arMsg.length; i++) {
+			let maxLineWidth = arMsg[i].offsetWidth;
+
+			let textContent = arMsg[i].textContent;
+
+			let textWords = textContent.split("");
+
+			let newContent = "";
+
+			let tempContent2 = "";
+			
+			let first = true;
+			for (let j = 0; j < textWords.length; j++) {
+				let word = textWords[j];
+				const tempContent = newContent + word;
+				const tempElement = document.createElement('div');
+				tempElement.classList = 'tempEl';
+				tempElement.textContent = tempContent2;
+
+				tempElement.style.display = 'inline-block';
+
+				arMsg[i].appendChild(tempElement);
+				
+				if(tempElement.offsetWidth >= 160 && first){
+					newContent += word;
+					tempContent2 += word;
+					first = false;
+				} else if (tempElement.offsetWidth > 159.8) {
+					newContent += '<br>' + word;
+					tempContent2 = "";
+				} else {
+					newContent += word;
+					tempContent2 += word;
+				}
+			}
+			arMsg[i].innerHTML = newContent.trim();
+		}		
+	}
 	
 </script>
 </html>
