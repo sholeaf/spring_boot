@@ -1,0 +1,54 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    width: 100%;
+    height: 100px;
+	background-color: #F7FFE5;
+    display: flex;
+    position: fixed;
+}
+
+footer {
+    height: 100px;
+	background-color: #FF9B9B;
+}
+
+
+
+
+
+
+#wrap p{
+    display: block;
+
+}
+.headimg{
+    width: 100%;
+    height: 500px;
+    background: url(../images/headerimg.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.imglist {
+	border: 1px solid black;
+	margin: 20px;
+}
+a {
+	display: flex;
+}
+
+.likecnt{
+	margin-left: 10px;
+}
+
+.id{
+	margin-right: auto;
+}
+.like{
+	display: flex;
+	justify-content: flex-start;
+}

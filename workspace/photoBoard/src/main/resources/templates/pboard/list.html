@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link rel="stylesheet" href="/css/header.css">
+</head>
+
+<body>
+	<header>
+		animal place
+	</header>
+
+	<div id="wrap">
+		<div class="headimg">
+		</div>
+		<div class="btn">
+			<a href="">글쓰기</a>
+		</div>
+		<div class="boardlist">
+			<div th:if="${list == null or list.size() == 0}" class="row no-list">
+				<div>등록된 게시글이 없습니다.</div>
+			</div>
+			<div class="imglist" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
+				<a th:href="${board.boardnum}">
+					<div class="boardimg">
+						이미지 넣기
+					</div>
+
+				</a>
+				<div class="like">
+					<p class="id">[[${board.userid}]]</p>
+					<a href="" class="likebtn">하트 <p class="likecnt"> [[${board.boardlikecnt}]]</p> </a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<footer>
+		finish
+	</footer>
+</body>
+<script>
+
+</script>
+
+</html>
