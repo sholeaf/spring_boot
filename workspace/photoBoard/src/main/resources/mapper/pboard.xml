@@ -4,9 +4,15 @@
 <mapper namespace="com.example.demo.mapper.PBoardMapper">
 	<select id="getList">
 		select * from p_board
-		where boardnum > #{lastBoardnum}
+		where boardnum <![CDATA[<]]> #{lastBoardnum}+1
 		order by boardnum desc
 		limit #{limit}
+	</select>
+	<select id="getBoardnum">
+		select boardnum
+		from p_board
+		order by boardnum desc
+		limit 1
 	</select>
 </mapper>
 

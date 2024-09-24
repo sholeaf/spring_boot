@@ -28,9 +28,10 @@ footer {
 }
 .headimg{
     width: 100%;
-    height: 500px;
+    height: 600px;
     background: url(../images/headerimg.jpg);
     background-size: cover;
+	background-position: center;
     background-repeat: no-repeat;
 }
 .imglist {

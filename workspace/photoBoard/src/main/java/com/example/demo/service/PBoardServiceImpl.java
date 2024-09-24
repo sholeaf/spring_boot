@@ -12,12 +12,18 @@ import com.example.demo.model.PBoardDTO;
 public class PBoardServiceImpl implements PBoardService {
 	
 	@Autowired
-	private PBoardMapper pbmapper;
+	private PBoardMapper pbmapper; 
 	
 	@Override
-	public List<PBoardDTO> getList(long lastBoardnum, int limit) {
+	public List<PBoardDTO> getList(Long lastBoardnum, int limit) {
 		List<PBoardDTO> list = pbmapper.getList(lastBoardnum, limit);
 		return list;
 	}
-	
+
+	@Override
+	public Long getStatnum() {
+		Long boardnum = pbmapper.getBoardnum();
+		return boardnum;
+	}
+
 }

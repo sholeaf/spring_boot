@@ -9,5 +9,7 @@ import com.example.demo.model.PBoardDTO;
 
 @Mapper
 public interface PBoardMapper {
-	List<PBoardDTO> getList(@Param("lastBoardnum") long lastBoardnum, @Param("limit") int limit);
+	List<PBoardDTO> getList(@Param("lastBoardnum") Long lastBoardnum, @Param("limit") int limit);
+
+	Long getBoardnum();
 }

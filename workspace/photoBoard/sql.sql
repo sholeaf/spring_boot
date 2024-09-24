@@ -32,9 +32,9 @@ create table p_board(
 	boardflag bool default false #댓글 알림을 위한 컬럼
 );
 drop table p_board;
-insert p_board (boardtitle,boardcontents,boardlikecnt,userid,boardflag) value("sample data","sample contents",3,"apple",0);
+insert p_board (boardtitle,boardcontents,boardlikecnt,userid,boardflag) value("sample data","sample contents",1,"apple",0);
 delete from p_board;
-select * from p_board;
+select * from p_board order by boardnum desc;
 
 create table p_reply(
 	replynum bigint primary key auto_increment,
@@ -47,7 +47,7 @@ create table p_reply(
 
 #p_pic -> p_file로 수정
 create table p_file(
-	systemname varchar(3000) not null,
+  systemname varchar(3000) not null,
   orgname varchar(3000) not null,
   boardnum bigint
 );

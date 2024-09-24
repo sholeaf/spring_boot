@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Document</title>
 	<link rel="stylesheet" href="/css/header.css">
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 
 <body>
@@ -37,11 +38,60 @@
 			</div>
 		</div>
 	</div>
+	<div id="loading" style="display:none;">Loading...</div>
 	<footer>
 		finish
 	</footer>
 </body>
 <script>
+	let lastBoardnum = 100;
+	let loading = false;
+	
+	
+	
+	$(window).scroll(function(){
+		if ($(window).scrollTop() + $(window).height() >= $(document).height() && !loading) {
+		               loading = true;
+		               $("#loading").show();
+		               $.ajax({
+		                   url: '/pboard/loadMore',
+		                   data: { lastBoardnum: lastBoardnum },
+		                   success: function(data) {
+		                       if (data.length > 0) {
+		                           data.forEach(list => {
+		                               $('.boardlist').append(`
+									   <div class="imglist">
+									   				<a th:href="${list.boardnum}">
+									   					<div class="boardimg">
+									   						이미지 넣기
+									   					</div>
+
+									   				</a>
+									   				<div class="like">
+									   					<p class="id">${list.userid}</p>
+									   					<a href="" class="likebtn">하트 <p class="likecnt"> ${list.boardlikecnt}</p> </a>
+									   				</div>
+									   			</div>
+		                               `);
+		                               lastBoardnum = list.boardnum; // 마지막 ID 업데이트
+									   console.log(lastBoardnum);
+									   if(data.length == 1){
+										data.length = -1;
+									   }
+								   });
+		                       } else{
+		                           $(window).off("scroll"); // 더 이상 로드할 데이터가 없을 때 스크롤 이벤트 비활성화
+		                       }
+		                       loading = false;
+		                       $("#loading").hide();
+		                   },
+		                   error: function() {
+		                       loading = false;
+		                       $("#loading").hide();
+		                   }
+		               });
+		           }
+		       });
 
 </script>
 

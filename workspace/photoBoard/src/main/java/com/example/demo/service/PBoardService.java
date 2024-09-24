@@ -5,5 +5,7 @@ import java.util.List;
 import com.example.demo.model.PBoardDTO;
 
 public interface PBoardService {
-	List<PBoardDTO> getList(long lastBoardnum, int limit);
+	List<PBoardDTO> getList(Long lastBoardnum, int limit);
+
+	Long getStatnum();
 }

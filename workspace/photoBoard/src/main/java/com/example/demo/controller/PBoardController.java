@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,14 +23,20 @@ public class PBoardController {
 	private PBoardService pbservice;
 	
 	@GetMapping("list")
-	public String replace(Model model) {
-		model.addAttribute("list", new ArrayList<PBoardDTO>());
-		return "list";
+	public String getPBoard(Model model) {
+		Long boardnum = pbservice.getStatnum();
+		System.out.println(boardnum);
+		model.addAttribute("list", pbservice.getList(boardnum, 10));
+		System.out.println(pbservice.getList(boardnum, 10));//데이터 제대로 담겨있음
+		return "pboard/list";
 	}
 	
 	@GetMapping("loadMore")
 	@ResponseBody
-	public List<PBoardDTO> loadMorePBoard(@RequestParam(required = false) long lastBoardnum){
-		return pbservice.getList(lastBoardnum != null ? lastBoardnum : 0l, 10);
+	public List<PBoardDTO> loadMorePBoard(@RequestParam(required = false) Long lastBoardnum){
+		List<PBoardDTO> list = pbservice.getList(lastBoardnum != null ? lastBoardnum : 0, 10);
+		System.out.println("loadmore 에서 마지막 보드넘"+lastBoardnum);
+		System.out.println(list);
+		return list;
 	}
 }
