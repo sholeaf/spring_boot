@@ -1,0 +1,24 @@
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.UserMapper">
+
+	<update id="updateUser">
+		update user
+		set userpw=#{userpw}, zipcde=#{zipcode}, addr=#{addr},
+		addrdetail=#{addrdetail}, addretc=#{addretc}, userhobby=#{userhobby}
+		where userid=#{userid}
+	</update>
+	<delete id="deleteUser">
+		delete from user where userid=#{userid}
+	</delete>
+	<select id="getUserByUserid">
+		select * from user where userid=#{userid}
+	</select>
+</mapper>
+
+
+
+
+
+

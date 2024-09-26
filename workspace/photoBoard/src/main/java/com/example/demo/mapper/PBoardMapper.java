@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -9,7 +10,7 @@ import com.example.demo.model.PBoardDTO;
 
 @Mapper
 public interface PBoardMapper {
-	List<PBoardDTO> getList(@Param("lastBoardnum") Long lastBoardnum, @Param("limit") int limit);
-
+	ArrayList<PBoardDTO> getList(@Param("lastBoardnum") Long lastBoardnum, @Param("limit") int limit);
 	Long getBoardnum();
+	boolean insertBoard(PBoardDTO pboard);
 }

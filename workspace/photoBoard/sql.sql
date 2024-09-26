@@ -31,10 +31,15 @@ create table p_board(
     
 	boardflag bool default false #댓글 알림을 위한 컬럼
 );
-drop table p_board;
-insert p_board (boardtitle,boardcontents,boardlikecnt,userid,boardflag) value("sample data","sample contents",1,"apple",0);
-delete from p_board;
+##################### drop table p_board;
+
+
+insert p_board (boardtitle,boardcontents,boardlikecnt,userid) value("sample data","sample contents",1,"apple");
+delete from p_board where boardtitle="test";
+delete from p_file;
+
 select * from p_board order by boardnum desc;
+select * from p_file order by boardnum desc;
 
 create table p_reply(
 	replynum bigint primary key auto_increment,

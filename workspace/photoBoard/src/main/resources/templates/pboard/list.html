@@ -10,88 +10,237 @@
 </head>
 
 <body>
+	<th:block th:if="${w != null and w == 'n'}">
+		<script>
+			alert("이미지가 정상적으로 업로드 되지 못했습니다.");
+		</script>
+	</th:block>
+	<th:block th:if="${w != null and w == 't'}">
+		<script>
+			alert("게시글 등록 성공!");
+		</script>
+	</th:block>
+	<th:block th:if="${w != null and w == 'f'}">
+		<script>
+			alert("게시글 등록 실패했습니다!");
+		</script>
+	</th:block>
 	<header>
-		animal place
+		<a class="logo" href="#"></a>
+		<a class="logout" href="/user/logout">로그아웃</a>
 	</header>
 
 	<div id="wrap">
 		<div class="headimg">
 		</div>
+		<input type="hidden" id="lastBoardnum" th:value="${lastBoardnum}" />
 		<div class="btn">
-			<a href="">글쓰기</a>
+			<a href="#" id="openWriteModal">글쓰기</a>
 		</div>
 		<div class="boardlist">
 			<div th:if="${list == null or list.size() == 0}" class="row no-list">
 				<div>등록된 게시글이 없습니다.</div>
 			</div>
 			<div class="imglist" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
-				<a th:href="${board.boardnum}">
-					<div class="boardimg">
-						이미지 넣기
+				<div th:class="'list'+${board.boardnum}">
+					<a th:class="${board.boardnum}" th:href="${board.boardnum}">
+						<div class="boardimg">
+						</div>
+					</a>
+					<div class="like">
+						<p class="id">[[${board.userid}]]</p>
+						<a href="" class="likebtn">하트 <p class="likecnt"> [[${board.boardlikecnt}]]</p> </a>
 					</div>
-
-				</a>
-				<div class="like">
-					<p class="id">[[${board.userid}]]</p>
-					<a href="" class="likebtn">하트 <p class="likecnt"> [[${board.boardlikecnt}]]</p> </a>
 				</div>
 			</div>
 		</div>
+	</div>
+	<div id="modal" class="modal">
+		<span class="close">&times;</span>
+		<div id="caption"></div>
+		<div class="modal-content">
+			<h2>게시물 등록</h2>
+			<form id="postForm" method="post" action="/pboard/write" enctype="multipart/form-data">
+				<input type="text" name="boardtitle" placeholder="제목" required /><br /><br />
+
+				<input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.webp,.gif" style="display: none;"
+					required />
+				<button type="button" id="addFileButton">사진 추가하기</button>
+				<div id="warningMessage" style="visibility: hidden;">
+					<p>사진을 추가해야 게시글을 작성할 수 있습니다.</p> <!-- 경고 메시지 -->
+				</div>
+				<ul id="fileList"></ul> <!--선택된 파일 리스트를 보기 위한 태그-->
+
+				<textarea name="boardcontents" placeholder="내용" required></textarea><br /><br />
+				<input type="text" name="userid" th:value="${session.loginUser}" readonly />
+				<button type="submit">등록</button>
+				<button type="button" id="closeModal">닫기</button>
+			</form>
+		</div>
+		<img id="largeImg" class="large-thumbnail" /> <!-- 큰 이미지를 표시할 요소 추가 -->
 	</div>
 	<div id="loading" style="display:none;">Loading...</div>
 	<footer>
 		finish
 	</footer>
 </body>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-	let lastBoardnum = 100;
-	let loading = false;
-	
-	
-	
-	$(window).scroll(function(){
-		if ($(window).scrollTop() + $(window).height() >= $(document).height() && !loading) {
-		               loading = true;
-		               $("#loading").show();
-		               $.ajax({
-		                   url: '/pboard/loadMore',
-		                   data: { lastBoardnum: lastBoardnum },
-		                   success: function(data) {
-		                       if (data.length > 0) {
-		                           data.forEach(list => {
-		                               $('.boardlist').append(`
-									   <div class="imglist">
-									   				<a th:href="${list.boardnum}">
-									   					<div class="boardimg">
-									   						이미지 넣기
-									   					</div>
 
-									   				</a>
-									   				<div class="like">
-									   					<p class="id">${list.userid}</p>
-									   					<a href="" class="likebtn">하트 <p class="likecnt"> ${list.boardlikecnt}</p> </a>
-									   				</div>
-									   			</div>
+	let lastBoardnum = document.getElementById("lastBoardnum").value;
+	let loading = false;
+
+	const fileInput = $('#fileInput');
+	const fileList = $('#fileList');
+	let filesArray = [];
+
+	// 파일 추가 버튼 클릭 시 파일 입력 클릭
+	$('#addFileButton').on('click', function () {
+		$('#fileInput').click(); // 숨겨진 파일 입력 요소 클릭
+	});
+
+	// 파일 추가 및 리스트 업데이트
+	fileInput.on('change', function (event) {
+		const selectedFiles = Array.from(event.target.files);
+		selectedFiles.forEach(file => {
+			// 중복 체크
+			if (!filesArray.some(f => f.name === file.name && f.size === file.size)) {
+				filesArray.push(file);
+			}
+		});
+		updateFileList();
+	});
+
+
+	// 파일 리스트 업데이트 함수
+	function updateFileList() {
+		fileList.empty();
+		filesArray.forEach((file, index) => {
+			const li = $('<li>').addClass('file-item'); // 파일 아이템 클래스 추가
+
+			// 이미지 파일일 경우 썸네일 생성
+			if (file.type.startsWith('image/')) {
+				const thumbnailDiv = $('<div>').addClass('thumbnail-container'); // 썸네일 컨테이너 생성
+				const img = $('<img>').attr('src', URL.createObjectURL(file)).addClass('thumbnail'); // 썸네일 클래스 추가
+				thumbnailDiv.append(img); // 이미지를 컨테이너에 추가
+				li.prepend(thumbnailDiv); // 리스트 아이템 앞에 썸네일 컨테이너 추가
+			}
+
+			const removeBtn = $('<button>').text('삭제').on('click', function () {
+				// 배열에서 파일 제거
+				filesArray.splice(index, 1);
+				updateFileList(); // 리스트 업데이트
+				if (filesArray.length === 0) {
+					$('#warningMessage').css('visibility', 'visible'); // 경고 메시지 표시
+				}
+				else {
+					$('#warningMessage').css('visiblity', 'hidden'); // 경고 메시지 표시
+				}
+			});
+			li.append(removeBtn);
+			fileList.append(li);
+		});
+	}
+
+	// 폼 제출 시 파일 배열을 파일 입력에 추가
+	$('#postForm').on('submit', function (event) {
+		event.preventDefault(); // 기본 제출 방지
+
+
+		const formData = new FormData(this); // FormData 생성
+
+
+		// 배열에 있는 파일들을 FormData에 추가
+		filesArray.forEach(file => {
+			formData.append('files', file); // 파일 추가
+		});
+
+		// AJAX 요청
+		$.ajax({
+			url: $(this).attr('action'),
+			type: $(this).attr('method'),
+			data: formData,
+			contentType: false, // multipart/form-data 자동 처리
+			processData: false, // jQuery가 데이터를 처리하지 않도록 설정
+			success: function (response) {
+				// 성공 처리 후 리다이렉션
+				window.location.href = '/pboard/list'; // 성공적으로 데이터를 전송한 후 페이지 이동
+			},
+			error: function (xhr, status, error) {
+				console.error('Error:', error);
+			}
+		});
+	});
+
+	console.log(lastBoardnum);
+
+	$(window).scroll(function () {
+		if ($(window).scrollTop() + $(window).height() >= $(document).height() && !loading) {
+			loading = true;
+			$("#loading").show();
+			$.ajax({
+				url: '/pboard/loadMore',
+				data: {lastBoardnum: lastBoardnum},
+				success: function (data) {
+					if (data.length > 0) {
+						data.forEach(list => {
+							$('.boardlist').append(`
+								<div class="imglist">
+									<div class="list${list.boardnum}"> <!-- 동적으로 클래스 이름 설정 -->
+										<a href="${list.boardnum}">
+											<div class="boardimg"></div>
+										</a>
+										<div class="like">
+											<p class="id">${list.userid}</p>
+											<a href="" class="likebtn">하트 <p class="likecnt">${list.boardlikecnt}</p></a>
+										</div>
+									</div>
+								</div>
 		                               `);
-		                               lastBoardnum = list.boardnum; // 마지막 ID 업데이트
-									   console.log(lastBoardnum);
-									   if(data.length == 1){
-										data.length = -1;
-									   }
-								   });
-		                       } else{
-		                           $(window).off("scroll"); // 더 이상 로드할 데이터가 없을 때 스크롤 이벤트 비활성화
-		                       }
-		                       loading = false;
-		                       $("#loading").hide();
-		                   },
-		                   error: function() {
-		                       loading = false;
-		                       $("#loading").hide();
-		                   }
-		               });
-		           }
-		       });
+							lastBoardnum = list.boardnum; // 마지막 ID 업데이트
+							console.log(lastBoardnum);
+						});
+						if (data.length < 12) {
+							$(window).off("scroll"); // 더 이상 로드할 데이터가 없을 때 스크롤 이벤트 비활성화
+							console.log("더 이상 가져올 데이터 없음");
+						}
+					} else {
+						$(window).off("scroll"); // 빈 데이터일 경우 스크롤 이벤트 비활성화
+						console.log("더 이상 가져올 데이터 없음");
+					}
+					loading = false;
+					$("#loading").hide();
+					console.log(loading);
+				},
+				error: function () {
+					loading = false;
+					$("#loading").hide();
+				}
+			});
+		}
+	});
+
+	// 모달 열기
+	$('#openWriteModal').on('click', function (e) {
+		e.preventDefault(); // 링크의 기본 동작 방지
+		$('#modal').css('display', 'flex'); // 모달 표시
+	});
+
+	// 모달 닫기
+	$('#closeModal').on('click', function () {
+		$('#modal').css('display', 'none'); // 모달 숨김
+	});
+
+	// 모달 닫기 버튼
+	$('.close').on('click', function () {
+		$('#modal').hide(); // 모달 숨기기
+	});
+	// 모달 외부 클릭 시 모달 닫기
+	$(window).on('click', function (event) {
+		if (event.target === document.getElementById('modal')) {
+			$('#modal').hide();
+		}
+	});
 
 </script>
 

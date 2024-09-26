@@ -1,11 +1,14 @@
 package com.example.demo.service;
 
-import java.util.List;
+import java.util.ArrayList;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.PBoardDTO;
 
 public interface PBoardService {
-	List<PBoardDTO> getList(Long lastBoardnum, int limit);
-
-	Long getStatnum();
+	ArrayList<PBoardDTO> getList(Long lastBoardnum, int limit);
+	Long getStartnum();
+	Long getLastnum();
+	boolean regist(PBoardDTO pboard,MultipartFile[] files) throws Exception;
 }

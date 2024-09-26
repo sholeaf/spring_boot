@@ -14,6 +14,9 @@
 		order by boardnum desc
 		limit 1
 	</select>
+	<insert id="insertBoard">
+		insert into p_board(boardtitle,boardcontents,userid) values(#{boardtitle},#{boardcontents},#{userid})
+	</insert>
 </mapper>
 
 

@@ -1,19 +1,35 @@
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
 }
 
 header {
-    width: 100%;
-    height: 100px;
+	width: 100%;
+	height: 100px;
 	background-color: #F7FFE5;
-    display: flex;
-    position: fixed;
+	display: flex;
+	position: fixed;
+	align-items: center;
+	/* 수직 정렬 추가 */
+	justify-content: space-between;
+	/* 양쪽 끝으로 요소 배치 */
 }
 
+.logo {
+	width: 377px;
+	height: 90px;
+	background: url(../images/logo.png);
+	background-repeat: no-repeat;
+	background-size: cover;
+	margin: 0 auto;
+	/* 로고를 가운데에 위치시키기 위한 설정 */
+}
+
+
+
 footer {
-    height: 100px;
+	height: 100px;
 	background-color: #FF9B9B;
 }
 
@@ -21,35 +37,165 @@ footer {
 
 
 
-
-#wrap p{
-    display: block;
-
-}
-.headimg{
-    width: 100%;
-    height: 600px;
-    background: url(../images/headerimg.jpg);
-    background-size: cover;
+.headimg {
+	width: 100%;
+	height: 600px;
+	background: url(../images/headerimg.jpg);
+	background-size: cover;
 	background-position: center;
-    background-repeat: no-repeat;
+	background-repeat: no-repeat;
 }
+
+.boardimg {
+	background: url(../images/cat.jpg);
+	width: 100%;
+	height: 250px;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.boardlist {
+	display: flex;
+	/* Flexbox 사용 */
+	flex-wrap: wrap;
+	/* 줄 바꿈 허용 */
+	justify-content: flex-start;
+	/* 왼쪽 정렬 (아이템 추가 시 왼쪽부터) */
+	max-width: 1600px;
+	/* 최대 너비 설정 */
+	margin: 0 auto;
+	/* 가운데 정렬 */
+}
+
 .imglist {
 	border: 1px solid black;
-	margin: 20px;
+	margin: 50px;
+	/* 간격을 좁힘 */
+	width: 300px;
+	/* 3개씩 배치하도록 너비 계산 (마진 고려) */
+	height: 300px;
+	display: flex;
+	flex-direction: column;
+	/* 세로 정렬 */
 }
+
 a {
 	display: flex;
 }
 
-.likecnt{
+.likecnt {
 	margin-left: 10px;
 }
 
-.id{
+.id {
 	margin-right: auto;
 }
-.like{
+
+.like {
 	display: flex;
 	justify-content: flex-start;
+}
+
+/* 모달 */
+.modal {
+	display: none;
+	/* 기본적으로 숨김 */
+	position: fixed;
+	z-index: 1000;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	/* 반투명 배경 */
+	justify-content: center;
+	align-items: center;
+}
+
+.modal-content {
+	background-color: white;
+	padding: 20px;
+	border-radius: 5px;
+	width: 1000px;
+	height: 500px;
+	text-align: center;
+}
+
+.close {
+	position: absolute;
+	top: 15px;
+	right: 35px;
+	color: #f1f1f1;
+	font-size: 40px;
+	font-weight: bold;
+	transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+	color: #bbb;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+
+/* 썸네일 컨테이너 스타일 */
+.thumbnail-container {
+	width: 50px;
+	/* 일정한 크기 */
+	height: 50px;
+	/* 일정한 높이 */
+	display: flex;
+	/* 플렉스 박스를 사용하여 정렬 */
+	justify-content: center;
+	/* 가로 중앙 정렬 */
+	align-items: center;
+	/* 세로 중앙 정렬 */
+	margin-right: 10px;
+	/* 썸네일과 텍스트 사이 간격 */
+	overflow: hidden;
+	/* 넘치는 이미지 부분 숨김 */
+	position: relative;
+	/* 자식 요소를 절대 위치로 설정하기 위해 상대 위치 설정 */
+}
+
+/* 썸네일 이미지 스타일 */
+.thumbnail {
+	max-width: 100%;
+	/* 최대 너비를 100%로 설정 */
+	max-height: 100%;
+	/* 최대 높이를 100%로 설정 */
+}
+
+
+
+/* 리스트 아이템 스타일 */
+.file-item {
+	display: flex;
+	/* 플렉스 박스를 사용하여 정렬 */
+	align-items: center;
+	/* 세로 중앙 정렬 */
+	justify-content: center;
+}
+
+/* 기타 스타일링 */
+a {
+	color: inherit;
+	/* 부모 요소의 색상으로 설정 */
+	text-decoration: none;
+	/* 밑줄 제거 */
+}
+
+/* <li> 요소의 기본 점 제거 */
+ul {
+	list-style-type: none;
+	/* 점 제거 */
+	padding: 0;
+	/* 패딩 제거 */
+	margin: 0;
+	/* 마진 제거 */
+}
+
+#warningMessage p{
+	color: red;
 }
