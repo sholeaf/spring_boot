@@ -6,15 +6,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Document</title>
 	<link rel="stylesheet" href="/css/header.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.js"></script>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 
 <body>
-	<th:block th:if="${w != null and w == 'n'}">
-		<script>
-			alert("이미지가 정상적으로 업로드 되지 못했습니다.");
-		</script>
-	</th:block>
 	<th:block th:if="${w != null and w == 't'}">
 		<script>
 			alert("게시글 등록 성공!");
@@ -43,9 +41,8 @@
 			</div>
 			<div class="imglist" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
 				<div th:class="'list'+${board.boardnum}">
-					<a th:class="${board.boardnum}" th:href="${board.boardnum}">
-						<div class="boardimg">
-						</div>
+					<a class="viewPost" href="#" th:data-boardnum="${board.boardnum}">
+						<div class="boardimg"></div>
 					</a>
 					<div class="like">
 						<p class="id">[[${board.userid}]]</p>
@@ -63,10 +60,10 @@
 			<form id="postForm" method="post" action="/pboard/write" enctype="multipart/form-data">
 				<input type="text" name="boardtitle" placeholder="제목" required /><br /><br />
 
-				<input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.webp,.gif" style="display: none;"
-					required />
+				<input type="file" id="fileInput" name="files" style="display: none;" multiple
+					accept=".jpg,.jpeg,.png,.webp,.gif" required />
 				<button type="button" id="addFileButton">사진 추가하기</button>
-				<div id="warningMessage" style="visibility: hidden;">
+				<div id="warningMessage">
 					<p>사진을 추가해야 게시글을 작성할 수 있습니다.</p> <!-- 경고 메시지 -->
 				</div>
 				<ul id="fileList"></ul> <!--선택된 파일 리스트를 보기 위한 태그-->
@@ -77,7 +74,12 @@
 				<button type="button" id="closeModal">닫기</button>
 			</form>
 		</div>
-		<img id="largeImg" class="large-thumbnail" /> <!-- 큰 이미지를 표시할 요소 추가 -->
+	</div>
+	<div id="viewPostModal" class="modal" style="display:none;">
+		<span class="close">&times;</span>
+		<div class="modal-content">
+
+		</div>
 	</div>
 	<div id="loading" style="display:none;">Loading...</div>
 	<footer>
@@ -90,51 +92,51 @@
 	let lastBoardnum = document.getElementById("lastBoardnum").value;
 	let loading = false;
 
-	const fileInput = $('#fileInput');
+	const fileInput = $('#fileInput')[0];
 	const fileList = $('#fileList');
-	let filesArray = [];
+	let dataTransfer = new DataTransfer(); // DataTransfer 객체 초기화
 
 	// 파일 추가 버튼 클릭 시 파일 입력 클릭
 	$('#addFileButton').on('click', function () {
-		$('#fileInput').click(); // 숨겨진 파일 입력 요소 클릭
+		fileInput.click(); // 숨겨진 파일 입력 요소 클릭
 	});
 
 	// 파일 추가 및 리스트 업데이트
-	fileInput.on('change', function (event) {
+	fileInput.addEventListener('change', function (event) {
 		const selectedFiles = Array.from(event.target.files);
 		selectedFiles.forEach(file => {
 			// 중복 체크
-			if (!filesArray.some(f => f.name === file.name && f.size === file.size)) {
-				filesArray.push(file);
+			if (![...dataTransfer.files].some(f => f.name === file.name && f.size === file.size)) {
+				dataTransfer.items.add(file); // DataTransfer에 파일 추가
 			}
 		});
-		updateFileList();
+		fileInput.files = dataTransfer.files; // input의 파일 리스트 업데이트
+		updateFileList(); // 파일 리스트 업데이트
+		if (dataTransfer.files.length > 0) {
+			$('#warningMessage').css('visibility', 'hidden'); // 경고 메시지 숨기기
+		}
 	});
-
 
 	// 파일 리스트 업데이트 함수
 	function updateFileList() {
 		fileList.empty();
-		filesArray.forEach((file, index) => {
-			const li = $('<li>').addClass('file-item'); // 파일 아이템 클래스 추가
+		Array.from(dataTransfer.files).forEach((file, index) => {
+			const li = $('<li>').addClass('file-item');
 
 			// 이미지 파일일 경우 썸네일 생성
 			if (file.type.startsWith('image/')) {
-				const thumbnailDiv = $('<div>').addClass('thumbnail-container'); // 썸네일 컨테이너 생성
-				const img = $('<img>').attr('src', URL.createObjectURL(file)).addClass('thumbnail'); // 썸네일 클래스 추가
-				thumbnailDiv.append(img); // 이미지를 컨테이너에 추가
-				li.prepend(thumbnailDiv); // 리스트 아이템 앞에 썸네일 컨테이너 추가
+				const thumbnailDiv = $('<div>').addClass('thumbnail-container');
+				const img = $('<img>').attr('src', URL.createObjectURL(file)).addClass('thumbnail');
+				thumbnailDiv.append(img);
+				li.prepend(thumbnailDiv);
 			}
 
 			const removeBtn = $('<button>').text('삭제').on('click', function () {
-				// 배열에서 파일 제거
-				filesArray.splice(index, 1);
+				dataTransfer.items.remove(index); // DataTransfer에서 파일 제거
+				fileInput.files = dataTransfer.files; // input의 파일 리스트 업데이트
 				updateFileList(); // 리스트 업데이트
-				if (filesArray.length === 0) {
+				if (dataTransfer.files.length === 0) {
 					$('#warningMessage').css('visibility', 'visible'); // 경고 메시지 표시
-				}
-				else {
-					$('#warningMessage').css('visiblity', 'hidden'); // 경고 메시지 표시
 				}
 			});
 			li.append(removeBtn);
@@ -142,35 +144,7 @@
 		});
 	}
 
-	// 폼 제출 시 파일 배열을 파일 입력에 추가
-	$('#postForm').on('submit', function (event) {
-		event.preventDefault(); // 기본 제출 방지
 
-
-		const formData = new FormData(this); // FormData 생성
-
-
-		// 배열에 있는 파일들을 FormData에 추가
-		filesArray.forEach(file => {
-			formData.append('files', file); // 파일 추가
-		});
-
-		// AJAX 요청
-		$.ajax({
-			url: $(this).attr('action'),
-			type: $(this).attr('method'),
-			data: formData,
-			contentType: false, // multipart/form-data 자동 처리
-			processData: false, // jQuery가 데이터를 처리하지 않도록 설정
-			success: function (response) {
-				// 성공 처리 후 리다이렉션
-				window.location.href = '/pboard/list'; // 성공적으로 데이터를 전송한 후 페이지 이동
-			},
-			error: function (xhr, status, error) {
-				console.error('Error:', error);
-			}
-		});
-	});
 
 	console.log(lastBoardnum);
 
@@ -220,7 +194,36 @@
 		}
 	});
 
-	// 모달 열기
+
+	$('.viewPost').on('click', function (e) {
+		e.preventDefault(); // 기본 링크 동작 방지
+
+		const boardnum = $(this).data('boardnum'); // boardnum 가져오기
+		console.log(boardnum);
+
+		// AJAX 요청을 통해 게시글 내용을 가져옴
+		$.ajax({
+			url: '/pboard/get', // 게시글 내용을 가져오는 URL
+			data: {boardnum: boardnum}, // 쿼리 파라미터로 boardNum 전달
+			success: function (data) {
+				// 모달 내용을 업데이트
+				$('#viewPostModal .modal-content').html(data); // 응답으로 받은 HTML을 모달에 넣기
+				$('#viewPostModal').css('display', 'flex'); // 모달 표시
+				swiper.update();
+			},
+			error: function () {
+				alert('게시글을 불러오는 데 실패했습니다.');
+			}
+		});
+	});
+	
+	
+	// 모달 닫기 기능
+	$('.close').on('click', function () {
+		$('#viewPostModal').hide(); // 모달 숨기기
+	});
+
+	// 게시글 작성모달 열기
 	$('#openWriteModal').on('click', function (e) {
 		e.preventDefault(); // 링크의 기본 동작 방지
 		$('#modal').css('display', 'flex'); // 모달 표시
@@ -241,6 +244,8 @@
 			$('#modal').hide();
 		}
 	});
+
+
 
 </script>
 

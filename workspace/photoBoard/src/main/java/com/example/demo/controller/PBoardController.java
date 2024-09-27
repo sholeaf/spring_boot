@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.PBoardDTO;
 import com.example.demo.service.PBoardService;
+import com.example.demo.service.PFileService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,12 +28,18 @@ public class PBoardController {
 
 	@Autowired
 	private PBoardService pbservice;
+	
+	@Autowired
+	private PFileService pfservice;
 
 	@GetMapping("list")
 	public void getPBoard(HttpServletRequest req, Model model) {
 		Long boardnum = pbservice.getStartnum();
 		ArrayList<PBoardDTO> list = pbservice.getList(boardnum, 12);
 		Long lastBoardnum = list.get(list.size() - 1).getBoardnum();
+		
+//		model.addAttribute("img",pfservice.getFileByBoardnum(list));
+		
 		
 		model.addAttribute("lastBoardnum", lastBoardnum);
 		model.addAttribute("list", list);
@@ -60,14 +68,6 @@ public class PBoardController {
 
 	@PostMapping("write")
 	public String write(PBoardDTO pboard, MultipartFile[] files, HttpServletResponse resp) throws Exception {
-		if(files == null) {
-			Cookie cookie = new Cookie("w", "n");
-			cookie.setPath("/");
-			cookie.setMaxAge(1);
-			resp.addCookie(cookie);
-			return "redirect:/pboard/list";
-		}
-		
 		if (pbservice.regist(pboard, files)) {
 			Cookie cookie = new Cookie("w", "t");
 			cookie.setPath("/");
@@ -83,4 +83,16 @@ public class PBoardController {
 		}
 		return "redirect:/pboard/list";
 	}
+	
+	@GetMapping("get")
+	public String getBoard(@RequestParam("boardnum") Long boardnum, Model model) {
+		System.out.println(pfservice.getFilesByBoardnum(boardnum));
+		System.out.println(pbservice.getBoardByBoardnum(boardnum));
+		model.addAttribute("flist",pfservice.getFilesByBoardnum(boardnum));
+		model.addAttribute("board",pbservice.getBoardByBoardnum(boardnum));
+        //일단 보드넘을 사용해서 file의 정보와 pboard의 정보를 가져와야함.
+		//나중에 reply의 정보도 가져와야함.
+		return "pboard/viewPost"; // viewPost.html 템플릿 반환
+    }
+	
 }

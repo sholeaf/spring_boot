@@ -9,6 +9,6 @@ import com.example.demo.model.PBoardDTO;
 public interface PBoardService {
 	ArrayList<PBoardDTO> getList(Long lastBoardnum, int limit);
 	Long getStartnum();
-	Long getLastnum();
 	boolean regist(PBoardDTO pboard,MultipartFile[] files) throws Exception;
+	PBoardDTO getBoardByBoardnum(Long boardnum);
 }

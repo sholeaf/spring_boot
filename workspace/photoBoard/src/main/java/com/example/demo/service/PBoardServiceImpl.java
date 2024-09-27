@@ -37,8 +37,7 @@ public class PBoardServiceImpl implements PBoardService {
 
 	@Override
 	public Long getStartnum() {
-		Long boardnum = pbmapper.getBoardnum();
-		return boardnum;
+		return pbmapper.getBoardnum();
 	}
 
 	@Override
@@ -81,9 +80,8 @@ public class PBoardServiceImpl implements PBoardService {
 	}
 
 	@Override
-	public Long getLastnum() {
-		// TODO Auto-generated method stub
-		return null;
+	public PBoardDTO getBoardByBoardnum(Long boardnum) {
+		return pbmapper.getBoardByBoardnum(boardnum);
 	}
 
 }

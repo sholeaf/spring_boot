@@ -13,4 +13,5 @@ public interface PBoardMapper {
 	ArrayList<PBoardDTO> getList(@Param("lastBoardnum") Long lastBoardnum, @Param("limit") int limit);
 	Long getBoardnum();
 	boolean insertBoard(PBoardDTO pboard);
+	PBoardDTO getBoardByBoardnum(Long boardnum);
 }

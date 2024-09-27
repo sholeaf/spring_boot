@@ -5,4 +5,13 @@
 	<insert id="insertFile">
 		insert p_file value(#{systemname},#{orgname},#{boardnum})
 	</insert>
+	<select id="getFilesByBoardnum">
+		select systemname from p_file where boardnum=#{boardnum}
+	</select>
+	<select id="getFileByBoardnum">
+		select systemname
+		from p_file
+		where boardnum=#{list.boardnum}
+		limit 
+	</select>
 </mapper>
