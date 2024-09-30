@@ -209,7 +209,6 @@
 				// 모달 내용을 업데이트
 				$('#viewPostModal .modal-content').html(data); // 응답으로 받은 HTML을 모달에 넣기
 				$('#viewPostModal').css('display', 'flex'); // 모달 표시
-				swiper.update();
 			},
 			error: function () {
 				alert('게시글을 불러오는 데 실패했습니다.');
@@ -244,6 +243,11 @@
 			$('#modal').hide();
 		}
 	});
+	$(window).on('click', function (event) {
+			if (event.target === document.getElementById('viewPostModal')) {
+				$('#viewPostModal').hide();
+			}
+		});
 
 
 

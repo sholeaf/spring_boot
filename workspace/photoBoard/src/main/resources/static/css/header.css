@@ -178,6 +178,12 @@ a {
 	justify-content: center;
 }
 
+.del-item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 /* 기타 스타일링 */
 a {
 	color: inherit;
@@ -199,10 +205,13 @@ ul {
 #warningMessage p {
 	color: red;
 }
+#warningText p {
+	color: red;
+}
 
 .carousel-inner {
 	display: flex !important;
-	
+
 	align-items: center !important;
 	height: 500px;
 }

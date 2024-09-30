@@ -84,4 +84,9 @@ public class PBoardServiceImpl implements PBoardService {
 		return pbmapper.getBoardByBoardnum(boardnum);
 	}
 
+	@Override
+	public boolean modify(PBoardDTO updateBoard) {
+		return pbmapper.updateBoard(updateBoard);
+	}
+
 }

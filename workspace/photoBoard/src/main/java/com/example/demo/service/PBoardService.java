@@ -11,4 +11,5 @@ public interface PBoardService {
 	Long getStartnum();
 	boolean regist(PBoardDTO pboard,MultipartFile[] files) throws Exception;
 	PBoardDTO getBoardByBoardnum(Long boardnum);
+	boolean modify(PBoardDTO updateBoard);
 }

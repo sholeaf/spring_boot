@@ -21,6 +21,11 @@
 		select * from p_board
 		where boardnum = #{boardnum}
 	</select>
+	<update id="updateBoard">
+		update p_board
+		set boardtitle=#{boardtitle}, boardcontents=#{boardcontents},updatedate=now()
+		where boardnum = #{boardnum}
+	</update>
 </mapper>
 
 

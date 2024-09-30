@@ -9,9 +9,14 @@
 		select systemname from p_file where boardnum=#{boardnum}
 	</select>
 	<select id="getFileByBoardnum">
-		select systemname
+		select *
 		from p_file
 		where boardnum=#{list.boardnum}
 		limit 
 	</select>
+	
+	<delete id="deleteFile">
+		delete from p_file
+		where (boardnum=#{boardnum}) and (systemname=#{systemname});
+	</delete>
 </mapper>
