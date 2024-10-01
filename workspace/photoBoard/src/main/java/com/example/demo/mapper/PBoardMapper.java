@@ -15,4 +15,5 @@ public interface PBoardMapper {
 	boolean insertBoard(PBoardDTO pboard);
 	PBoardDTO getBoardByBoardnum(Long boardnum);
 	boolean updateBoard(PBoardDTO updateBoard);
+	Long getNextBoardnum(Long lastBoardnum);
 }

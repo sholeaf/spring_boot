@@ -14,13 +14,20 @@
 		order by boardnum desc
 		limit 1
 	</select>
-	<insert id="insertBoard">
-		insert into p_board(boardtitle,boardcontents,userid) values(#{boardtitle},#{boardcontents},#{userid})
-	</insert>
 	<select id="getBoardByBoardnum">
 		select * from p_board
 		where boardnum = #{boardnum}
 	</select>
+	<select id="getNextBoardnum">
+		select boardnum from p_board
+		where boardnum <![CDATA[<]]> #{lastBoardnum}
+		order by boardnum desc
+		limit 1
+	</select>
+	
+	<insert id="insertBoard">
+		insert into p_board(boardtitle,boardcontents,userid) values(#{boardtitle},#{boardcontents},#{userid})
+	</insert>
 	<update id="updateBoard">
 		update p_board
 		set boardtitle=#{boardtitle}, boardcontents=#{boardcontents},updatedate=now()

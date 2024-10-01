@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +43,9 @@ public class PBoardController {
 		Long lastBoardnum = list.get(list.size() - 1).getBoardnum();
 
 //		model.addAttribute("img",pfservice.getFileByBoardnum(list));
-
+		// 이미지는 반복문으로 계속된 요청으로 해결(서비스에서 반복문)
+		//그럼 컨트롤러에서 list의 값을 들고 서비스에서 요청
+		// 서비스에서 list의 보드넘 추출해서 그 보드넘가지고 디비 요청해서 새로운 객체에 담음 그럼 boardDTO에 string url 을 넣어서 주소랑 같이 보내주기
 		model.addAttribute("lastBoardnum", lastBoardnum);
 		model.addAttribute("list", list);
 
@@ -61,12 +65,9 @@ public class PBoardController {
 	@GetMapping("loadMore")
 	@ResponseBody
 	public List<PBoardDTO> loadMorePBoard(@RequestParam(required = false) Long lastBoardnum) {
-		// lastBoardnum -1 은 오류 발생할 수 있음 수정 해야함
-		// 수정 한다면 lastBoardnum 다음 값 select문으로 Boardnum < lastBoardnum limit 1 이런식으로 하나
-		// 가져와서 그값을 초기 보드넘으로
-		// 수정완료 되면
-		List<PBoardDTO> list = pbservice.getList(lastBoardnum != null ? lastBoardnum - 1 : 0L, 12);
-		System.out.println("loadmore 에서 초기 보드넘" + lastBoardnum);
+		Long startBoardnum = pbservice.getNextBoardnum(lastBoardnum);
+		List<PBoardDTO> list = pbservice.getList(lastBoardnum != null ? startBoardnum : 0L, 12);
+		System.out.println("loadmore 에서 초기 보드넘" + startBoardnum);
 		System.out.println(list);
 		return list;
 	}
@@ -101,45 +102,42 @@ public class PBoardController {
 	}
 
 	@PostMapping("modify")
-	public ResponseEntity<String> modifyView(@RequestParam("boardnum") Long boardnum, @RequestParam("boardtitle") String boardtitle,
+	public ResponseEntity<Map<String, Object>> modifyView(@RequestParam("boardnum") Long boardnum, @RequestParam("boardtitle") String boardtitle,
 																	  @RequestParam("boardcontents") String boardcontents,
-																	  @RequestParam(value = "delete",  required = false) String[] delete,
+																	  @RequestParam(value = "delete",  required = false) String delete,
 																	  @RequestParam(value = "files",  required = false) MultipartFile[] files 
 																	  ) throws Exception {
-		System.out.println("modify 진입");
-		System.out.println(files);
 		if(files != null && files.length != 0) {
-			for(int i = 0; i < files.length; i++) {
-				System.out.println(files[i]);
-			}
-			System.out.println("files if문 진입");
 			if(!pfservice.insert(boardnum, files)) {				
 				System.out.println("pfservice.insert 실패");
-				return ResponseEntity.ok("수정 실패."); 
+				return ResponseEntity.ok(Map.of("message", "수정 실패 : 추가 파일 오류."));
 			}
 		}
-		if(delete != null && delete.length != 0) {		
-			System.out.println("delete진입");
-			if(!pfservice.delete(boardnum,delete)) {				
+		if(delete != null && delete.length() != 0) {
+			String[] deleteArr = delete.split(",");
+			if(!pfservice.delete(boardnum,deleteArr)) {				
 				System.out.println("pfservice.delete 실패");
-				return ResponseEntity.ok("수정 실패."); 
+				 return ResponseEntity.ok(Map.of("message", "수정 실패 : 기존 파일 삭제 오류."));  
 			}
 		}
-		
+		//넘겨줄 데이터 포장
 		PBoardDTO updateBoard = new PBoardDTO();
 		updateBoard.setBoardnum(boardnum);
 		updateBoard.setBoardtitle(boardtitle);
 		updateBoard.setBoardcontents(boardcontents);
 		
-		// update service 코드
+		Map<String, Object> updatedBoard = new HashMap<>();
 		if(pbservice.modify(updateBoard)) {
+			updatedBoard.put("boardtitle", boardtitle);
+			updatedBoard.put("boardcontetns", boardcontents);
+			updatedBoard.put("images", pfservice.getFilesByBoardnum(boardnum));
 			
+			Map<String, Object> response = new HashMap<>();
+		    response.put("updatedBoard", updatedBoard);
+		    return ResponseEntity.ok(response); 
 		}
 		else {
-			 return ResponseEntity.ok("수정 실패."); 
+			return ResponseEntity.ok(Map.of("message", "수정 실패"));  
 		}
-
-
-		 return ResponseEntity.ok("수정이 완료되었습니다."); // 응답 메시지
 	}
 }

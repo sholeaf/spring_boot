@@ -12,4 +12,6 @@ public class PBoardDTO {
 	private String updatedate;
 	private boolean boardflag;
 	private String userid;
+	
+	private String file;
 }

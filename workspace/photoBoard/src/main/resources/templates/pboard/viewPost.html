@@ -17,7 +17,9 @@
 				<div class="carousel-inner">
 					<div th:each="img, iterStat : ${flist}"
 						th:class="${iterStat.first} ? 'active carousel-item' : 'carousel-item'">
-						<img th:src="@{/images/pimages/}+${img}" style="width: auto; max-width: 500px; height: auto;">
+						<img th:src="@{/images/pimages/}+${img}"
+						     th:attr="border=${img.endsWith('.png')} ? '1' : null"
+						     style="width: auto; max-width: 500px; height: auto;">
 					</div>
 				</div>
 
@@ -50,10 +52,11 @@
 		<div id="modify" style="display: none;">
 			<h2>게시물 수정</h2>
 			<form id="modifyForm" method="post" action="/pboard/modify" enctype="multipart/form-data">
-				<input type="text" name="boardtitle" th:value="${board.boardtitle}" placeholder="제목"
+				<input type="text" name="newboardtitle" th:value="${board.boardtitle}" placeholder="제목"
 					required /><br /><br />
 
-				<input type="file" id="newFileInput" name="files" multiple accept=".jpg,.jpeg,.png,.webp,.gif" />
+				<input type="file" id="newFileInput" name="newfiles" style="display: none;" multiple
+					accept=".jpg,.jpeg,.png,.webp,.gif" />
 				<button type="button" id="newFileButton">사진 추가하기</button>
 				<div id="warningText" style="visibility: hidden;">
 					<p>사진을 추가해야 게시글을 작성할 수 있습니다.</p> <!-- 경고 메시지 -->
@@ -73,10 +76,20 @@
 
 				<ul id="newFileList"></ul> <!--선택된 파일 리스트를 보기 위한 태그-->
 
-				<textarea name="boardcontents" required>[[${board.boardcontents}]]</textarea><br /><br />
+				<textarea name="newboardcontents" required>[[${board.boardcontents}]]</textarea><br /><br />
 				<input type="text" name="userid" th:value="${session.loginUser}" readonly />
 				<button type="submit">등록</button>
 				<button type="button" id="close">취소</button>
+				<div id="loading">
+					<div class="loader">
+						<div class="dots">
+							<div class="dot"></div>
+							<div class="dot"></div>
+							<div class="dot"></div>
+						</div>
+						<p style="color: white;">수정 중...</p>
+					</div>
+				</div>
 			</form>
 		</div>
 	</div>
@@ -84,9 +97,21 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 	$(document).ready(function () {
-		const newFileInput = $('#newFileInput')[0]; // 여기에서 선언
+		$('body').addClass('no-scroll'); // 스크롤 비활성화
+		
+		const newFileInput = $('#newFileInput')[0];
 		const newFileList = $('#newFileList');
-		let newDataTransfer = new DataTransfer(); // DataTransfer 객체 초기화
+		const boardFileList = $('.board-file');
+
+		let orgFile = [];
+		let deletedFiles = [];
+		let newDataTransfer = new DataTransfer();
+
+
+		$('.del-item').each(function () {
+			const filePath = $(this).find('.fpath').val();
+			orgFile.push(filePath);
+		});
 
 		// 수정 버튼 클릭 시 이벤트
 		$('.modify').on('click', function (e) {
@@ -95,13 +120,48 @@
 			// 현재 콘텐츠를 숨기고 수정 폼 표시
 			$('#contentView').hide(); // 기존 게시글 내용을 숨김
 			$('#modify').show(); // 수정 폼을 보여줌
+			updateBoardFileList(); // 기존 파일 목록 업데이트
 		});
 
 		// 수정 폼에서 취소 버튼 클릭 시 이벤트
 		$('#close').on('click', function () {
+			// 기존 파일 목록 복원
+			boardFileList.empty(); // <ul class="board-file">의 모든 <li> 제거
+			deletedFiles = []; // 삭제된 파일 초기화
+			newDataTransfer = new DataTransfer();
+			newFileInput.value = '';
+			$('#newFileList').empty();
+			$('#warningText').css('visibility', 'hidden');
 			$('#modify').hide(); // 수정 폼 숨김
 			$('#contentView').show(); // 기존 콘텐츠 다시 표시
+
+			updateBoardFileList(); // 기존 파일 목록 복원
 		});
+
+		function updateBoardFileList() {
+			boardFileList.empty();
+			orgFile.forEach(file => {
+				const li = $('<li>').addClass('del-item');
+				const thumbnailDiv = $('<div>').addClass('thumbnail-container');
+				const img = $('<img>').attr('src', `/images/pimages/${file}`).addClass('thumbnail');
+				const input = $('<input>').attr('type', 'hidden').addClass('fpath').val(file);
+
+				thumbnailDiv.append(img);
+				li.append(thumbnailDiv).append(input);
+
+				// 삭제 버튼 추가
+				const removeBtn = $('<button>').text('삭제').on('click', function () {
+					// orgFile에서 삭제하지 않고 deletedFiles에 추가
+					const index = orgFile.indexOf(file);
+					if (index > -1) {
+						deletedFiles.push(orgFile[index]); // deletedFiles에 추가
+					}
+					li.remove(); // 리스트에서 삭제
+				});
+				li.append(removeBtn);
+				boardFileList.append(li); // board-file에 추가
+			});
+		}
 
 		$('#newFileButton').on('click', function () {
 			newFileInput.click(); // 숨겨진 파일 입력 요소 클릭
@@ -112,17 +172,43 @@
 			const selectedFiles = Array.from(event.target.files);
 			selectedFiles.forEach(file => {
 				// 중복 체크
-				if (![...newDataTransfer.files].some(f => f.name === file.name && f.size === file.size)) {
+				if (![...newDataTransfer.files].some(f => f.name === file.name && f.size === file.size) &&
+					!deletedFiles.includes(file.name)) {
 					newDataTransfer.items.add(file); // DataTransfer에 파일 추가
 				}
+				newFileInput.files = newDataTransfer.files; // input의 파일 리스트 업데이트
+				updateNewFileList(); // 파일 리스트 업데이
 			});
-			newFileInput.files = newDataTransfer.files; // input의 파일 리스트 업데이트
+
+			// 삭제된 파일 목록을 걸러내고 newFileList 업데이트
+			const existingFiles = Array.from(newDataTransfer.files).map(f => f.name);
+			const filteredDeletedFiles = deletedFiles.filter(file => !existingFiles.includes(file));
+
+			// 기존 파일을 제거하고 newFileList를 업데이트
+			$('#newFileList').empty(); // newFileList 초기화
+			filteredDeletedFiles.forEach(file => {
+				const li = $('<li>').addClass('file-item');
+				const removeBtn = $('<button>').text('삭제').on('click', function () {
+					// 삭제 버튼 클릭 시 파일 제거
+					const index = [...newDataTransfer.files].findIndex(f => f.name === file);
+					if (index > -1) {
+						newDataTransfer.items.remove(index); // DataTransfer에서 파일 제거
+						newFileInput.files = newDataTransfer.files; // input의 파일 리스트 업데이트
+						updateNewFileList(); // 리스트 업데이트
+					}
+				});
+				li.append(removeBtn);
+				$('#newFileList').append(li);
+			});
+
+			// 입력 필드의 파일 리스트 업데이트
+			newFileInput.files = newDataTransfer.files;
 			updateNewFileList(); // 파일 리스트 업데이트
+
 			if (newDataTransfer.files.length === 0 && $('.del-item').length === 0) {
 				$('#warningText').css('visibility', 'visible'); // 경고 메시지 표시
-			}
-			else {
-				$('#warningText').css('visibility', 'hidden'); // 경고 메시지 표시
+			} else {
+				$('#warningText').css('visibility', 'hidden'); // 경고 메시지 숨김
 			}
 		});
 
@@ -157,7 +243,7 @@
 		}
 
 		//del-item에서 삭제버튼을 누른 사진의 systemname을 저장하는 배열 선언
-		let deletedFiles = [];
+
 
 		$('.del-item button').on('click', function (e) {
 			e.preventDefault();
@@ -166,6 +252,16 @@
 			console.log('삭제 파일 이름 : ', fileName);
 			deletedFiles.push(fileName);
 			$(this).closest('.del-item').remove();
+
+			// DataTransfer에서 해당 파일 제거
+			for (let i = 0; i < newDataTransfer.items.length; i++) {
+				const item = newDataTransfer.items[i].getAsFile();
+				if (item && item.name === fileName) {
+					newDataTransfer.items.remove(i);
+					break; // 파일을 찾으면 반복문 종료
+				}
+			}
+
 			console.log('deletedFiles : ', deletedFiles);
 			if ($('.del-item').length === 0 && newDataTransfer.files.length === 0) {
 				$('#warningText').css('visibility', 'visible'); // 경고 메시지 표시
@@ -177,23 +273,31 @@
 
 		$('#modifyForm').on('submit', function (e) {
 			e.preventDefault();
+			const delitem = $('.del-item').length;
+
+
+			if (delitem === 0 && newDataTransfer.files.length === 0) {
+				alert('이미지 파일 추 필요합니다.');
+				return; // 전송 중지
+			}
 
 			const formData = new FormData(this);
 			//보낼 board 관련 데이터 추가
 			formData.append('boardnum', $('#boardnum').val());
-			formData.append('boardtitle', $('input[name="boardtitle"]').val());
-			formData.append('boardcontents', $('textarea[name="boardcontetns"]').val());
+			formData.append('boardtitle', $('input[name="newboardtitle"]').val());
+			formData.append('boardcontents', $('textarea[name="newboardcontents"]').val());
 
 			//보낼 file 관련 데이터 추가
-			if (deletedFiles != 0 || deletedFiles != null) {
-				formData.append('delete', JSON.stringify(deletedFiles));
+			formData.append('delete', deletedFiles.join(','));
+
+
+			for (let i = 0; i < newDataTransfer.files.length; i++) {
+				formData.append('files', newDataTransfer.files[i]);
+				console.log('파일 추가:', newDataTransfer.files[i].name);
 			}
-			if (newDataTransfer.files.length != 0 || newDataTransfer.files.length != null) {
-				for (let i = 0; i < newDataTransfer.files.length; i++) {
-					formData.append('files', newDataTransfer.files[i]);
-					console.log('파일 추가:', newDataTransfer.files[i].name); // 파일 이름 확인
-				}
-			}
+
+			$('#loading').show();
+
 			$.ajax({
 				url: '/pboard/modify',
 				method: 'POST',
@@ -201,12 +305,46 @@
 				contentType: false,
 				processData: false,
 				success: function (response) {
-					// 성공적으로 수정된 후에 페이지를 업데이트
-					alert(response); // 서버 응답을 알림으로 표시
-					location.href = '/pboard/list';
-				},
-				error: function () {
-					alert('수정에 실패했습니다.');
+					console.log(response);
+					const updatedBoard = response.updatedBoard;
+
+					// 3초 후에 화면 업데이트
+					setTimeout(function () {
+						$('#contentView h2').text(updatedBoard.boardtitle);
+						$('#contentView p').text(updatedBoard.boardcontents);
+
+						// 이미지 업데이트 (기존 이미지와 새 이미지를 반영)
+						const imageContainer = $('#contentView .carousel-inner');
+						imageContainer.empty(); // 기존 이미지 삭제
+
+						updatedBoard.images.forEach((img, index) => {
+							const itemClass = index === 0 ? 'active carousel-item' : 'carousel-item';
+							imageContainer.append(`
+				                <div class="${itemClass}">
+				                    <img src="/images/pimages/${img}" style="width: auto; max-width: 500px; height: auto;">
+				                </div>
+				            `);
+						});
+						$('#newFileList').empty(); // newFileList를 초기화
+						boardFileList.empty(); // <ul class="board-file">의 모든 <li> 제거
+						deletedFiles = []; // 삭제된 파일 초기화
+						newDataTransfer = new DataTransfer();
+						newFileInput.value = '';
+
+						orgFile.length = 0;
+						orgFile.push(...updatedBoard.images); // orgFile에 기존 이미지 추가
+
+						// 파일 리스트 업데이트
+						updateBoardFileList(); // 리스트 업데이트
+
+						$('#modify').hide(); // 수정 폼 숨김
+						$('#contentView').show(); // 기존 콘텐츠 다시 표시
+						$('#loading').hide();
+						alert("수정이 완료되었습니다!");
+					}, 2000);
+				}, error: function (jqXHR, textStatus, errorThrown) {
+					console.error('AJAX 요청 실패:', textStatus, errorThrown); // 오류 메시지 출력
+					console.log('서버 응답:', jqXHR.responseText); // 서버 응답 내용 확인
 				}
 			});
 		});

@@ -16,4 +16,6 @@ public interface PFileMapper {
 	ArrayList<String> getFileByBoardnum(ArrayList<PBoardDTO> list);
 
 	boolean deleteFile(Long boardnum, String systemname);
+
+	String getImg(long boardnum);
 }

@@ -10,12 +10,14 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.css">
 	<script src="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.js"></script>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	
 </head>
 
 <body>
 	<th:block th:if="${w != null and w == 't'}">
 		<script>
 			alert("게시글 등록 성공!");
+			window.location.href = '/pboard/list'; // 리다이렉트
 		</script>
 	</th:block>
 	<th:block th:if="${w != null and w == 'f'}">
@@ -42,7 +44,8 @@
 			<div class="imglist" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
 				<div th:class="'list'+${board.boardnum}">
 					<a class="viewPost" href="#" th:data-boardnum="${board.boardnum}">
-						<div class="boardimg"></div>
+						<img class="boardimg"
+							th:src="${board.file != null ? '/images/pimages/' + board.file : '/images/test-image.jpg'}">
 					</a>
 					<div class="like">
 						<p class="id">[[${board.userid}]]</p>
@@ -158,11 +161,12 @@
 				success: function (data) {
 					if (data.length > 0) {
 						data.forEach(list => {
+							const imageUrl = list.file ? `/images/pimages/${list.file}` : '/images/test-image.jpg';
 							$('.boardlist').append(`
 								<div class="imglist">
 									<div class="list${list.boardnum}"> <!-- 동적으로 클래스 이름 설정 -->
 										<a href="${list.boardnum}">
-											<div class="boardimg"></div>
+											<img class="boardimg" src="${imageUrl}">
 										</a>
 										<div class="like">
 											<p class="id">${list.userid}</p>
@@ -195,6 +199,7 @@
 	});
 
 
+
 	$('.viewPost').on('click', function (e) {
 		e.preventDefault(); // 기본 링크 동작 방지
 
@@ -215,8 +220,8 @@
 			}
 		});
 	});
-	
-	
+
+
 	// 모달 닫기 기능
 	$('.close').on('click', function () {
 		$('#viewPostModal').hide(); // 모달 숨기기
@@ -226,28 +231,33 @@
 	$('#openWriteModal').on('click', function (e) {
 		e.preventDefault(); // 링크의 기본 동작 방지
 		$('#modal').css('display', 'flex'); // 모달 표시
+		$('body').addClass('no-scroll'); // 스크롤 비활성화
 	});
 
 	// 모달 닫기
 	$('#closeModal').on('click', function () {
 		$('#modal').css('display', 'none'); // 모달 숨김
+		$('body').removeClass('no-scroll'); // 스크롤 활성화
 	});
 
 	// 모달 닫기 버튼
 	$('.close').on('click', function () {
 		$('#modal').hide(); // 모달 숨기기
+		$('body').removeClass('no-scroll'); // 스크롤 활성화
 	});
 	// 모달 외부 클릭 시 모달 닫기
 	$(window).on('click', function (event) {
 		if (event.target === document.getElementById('modal')) {
 			$('#modal').hide();
+			$('body').removeClass('no-scroll'); // 스크롤 활성화
 		}
 	});
 	$(window).on('click', function (event) {
-			if (event.target === document.getElementById('viewPostModal')) {
-				$('#viewPostModal').hide();
-			}
-		});
+		if (event.target === document.getElementById('viewPostModal')) {
+			$('#viewPostModal').hide();
+			$('body').removeClass('no-scroll'); // 스크롤 활성화
+		}
+	});
 
 
 

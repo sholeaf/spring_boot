@@ -32,6 +32,10 @@ public class PBoardServiceImpl implements PBoardService {
 	@Override
 	public ArrayList<PBoardDTO> getList(Long lastBoardnum, int limit) {
 		ArrayList<PBoardDTO> list = pbmapper.getList(lastBoardnum, limit);
+		for(int i = 0; i < list.size(); i++) {
+			String file = pfmapper.getImg(list.get(i).getBoardnum());
+			list.get(i).setFile(file);
+		}
 		return list;
 	}
 
@@ -87,6 +91,11 @@ public class PBoardServiceImpl implements PBoardService {
 	@Override
 	public boolean modify(PBoardDTO updateBoard) {
 		return pbmapper.updateBoard(updateBoard);
+	}
+
+	@Override
+	public Long getNextBoardnum(Long lastBoardnum) {
+		return pbmapper.getNextBoardnum(lastBoardnum);
 	}
 
 }
