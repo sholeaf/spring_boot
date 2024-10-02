@@ -74,19 +74,7 @@ public class PBoardController {
 
 	@PostMapping("write")
 	public String write(PBoardDTO pboard, MultipartFile[] files, HttpServletResponse resp) throws Exception {
-		if (pbservice.regist(pboard, files)) {
-			Cookie cookie = new Cookie("w", "t");
-			cookie.setPath("/");
-			cookie.setMaxAge(1);
-			resp.addCookie(cookie);
-		}
-
-		else {
-			Cookie cookie = new Cookie("w", "f");
-			cookie.setPath("/");
-			cookie.setMaxAge(1);
-			resp.addCookie(cookie);
-		}
+		pbservice.regist(pboard, files);
 		return "redirect:/pboard/list";
 	}
 

@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>게시글</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </head>
@@ -17,9 +18,8 @@
 				<div class="carousel-inner">
 					<div th:each="img, iterStat : ${flist}"
 						th:class="${iterStat.first} ? 'active carousel-item' : 'carousel-item'">
-						<img th:src="@{/images/pimages/}+${img}"
-						     th:attr="border=${img.endsWith('.png')} ? '1' : null"
-						     style="width: auto; max-width: 500px; height: auto;">
+						<img th:src="@{/images/pimages/}+${img}" th:attr="border=${img.endsWith('.png')} ? '1' : null"
+							style="width: auto; max-width: 500px; height: auto;">
 					</div>
 				</div>
 
@@ -44,7 +44,7 @@
 			<th:block>
 				<div th:if="${board.userid == session.loginUser}">
 					<a class="modify" href="#">수정</a>
-					<a th:href="${'/pboard/remove?boardnum='+board.boardnum}">삭제</a>
+					<a class="delete" href="#">삭제</a>
 				</div>
 			</th:block>
 			<!-- 댓글은 추후에 -->
@@ -52,6 +52,7 @@
 		<div id="modify" style="display: none;">
 			<h2>게시물 수정</h2>
 			<form id="modifyForm" method="post" action="/pboard/modify" enctype="multipart/form-data">
+				<input type="hidden" class="boardnum" th:value="${board.boardnum}" />
 				<input type="text" name="newboardtitle" th:value="${board.boardtitle}" placeholder="제목"
 					required /><br /><br />
 
@@ -80,7 +81,7 @@
 				<input type="text" name="userid" th:value="${session.loginUser}" readonly />
 				<button type="submit">등록</button>
 				<button type="button" id="close">취소</button>
-				<div id="loading">
+				<div id="loadingmodify">
 					<div class="loader">
 						<div class="dots">
 							<div class="dot"></div>
@@ -94,11 +95,11 @@
 		</div>
 	</div>
 </body>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <script>
 	$(document).ready(function () {
 		$('body').addClass('no-scroll'); // 스크롤 비활성화
-		
+
 		const newFileInput = $('#newFileInput')[0];
 		const newFileList = $('#newFileList');
 		const boardFileList = $('.board-file');
@@ -121,6 +122,12 @@
 			$('#contentView').hide(); // 기존 게시글 내용을 숨김
 			$('#modify').show(); // 수정 폼을 보여줌
 			updateBoardFileList(); // 기존 파일 목록 업데이트
+		});
+		
+		$('.delete').on('click',function(e){
+			e.preventDefault();
+			
+			//삭제 요청 넣기
 		});
 
 		// 수정 폼에서 취소 버튼 클릭 시 이벤트
@@ -157,9 +164,11 @@
 						deletedFiles.push(orgFile[index]); // deletedFiles에 추가
 					}
 					li.remove(); // 리스트에서 삭제
+					checkFileList();
 				});
 				li.append(removeBtn);
 				boardFileList.append(li); // board-file에 추가
+				checkFileList();
 			});
 		}
 
@@ -204,12 +213,6 @@
 			// 입력 필드의 파일 리스트 업데이트
 			newFileInput.files = newDataTransfer.files;
 			updateNewFileList(); // 파일 리스트 업데이트
-
-			if (newDataTransfer.files.length === 0 && $('.del-item').length === 0) {
-				$('#warningText').css('visibility', 'visible'); // 경고 메시지 표시
-			} else {
-				$('#warningText').css('visibility', 'hidden'); // 경고 메시지 숨김
-			}
 		});
 
 		// 파일 리스트 업데이트 함수
@@ -230,46 +233,15 @@
 					newDataTransfer.items.remove(index); // DataTransfer에서 파일 제거
 					newFileInput.files = newDataTransfer.files; // input의 파일 리스트 업데이트
 					updateNewFileList(); // 리스트 업데이트
-					if (newDataTransfer.files.length === 0 && $('.del-item').length === 0) {
-						$('#warningText').css('visibility', 'visible'); // 경고 메시지 표시
-					}
-					else {
-						$('#warningText').css('visibility', 'hidden'); // 경고 메시지 표시
-					}
+					checkFileList();
 				});
 				li.append(removeBtn);
 				newFileList.append(li);
+				checkFileList();
 			});
 		}
 
-		//del-item에서 삭제버튼을 누른 사진의 systemname을 저장하는 배열 선언
-
-
-		$('.del-item button').on('click', function (e) {
-			e.preventDefault();
-
-			const fileName = $(this).closest('.del-item').find('.fpath').val();
-			console.log('삭제 파일 이름 : ', fileName);
-			deletedFiles.push(fileName);
-			$(this).closest('.del-item').remove();
-
-			// DataTransfer에서 해당 파일 제거
-			for (let i = 0; i < newDataTransfer.items.length; i++) {
-				const item = newDataTransfer.items[i].getAsFile();
-				if (item && item.name === fileName) {
-					newDataTransfer.items.remove(i);
-					break; // 파일을 찾으면 반복문 종료
-				}
-			}
-
-			console.log('deletedFiles : ', deletedFiles);
-			if ($('.del-item').length === 0 && newDataTransfer.files.length === 0) {
-				$('#warningText').css('visibility', 'visible'); // 경고 메시지 표시
-			}
-			else {
-				$('#warningText').css('visibility', 'hidden'); // 경고 메시지 표시
-			}
-		});
+		
 
 		$('#modifyForm').on('submit', function (e) {
 			e.preventDefault();
@@ -296,7 +268,7 @@
 				console.log('파일 추가:', newDataTransfer.files[i].name);
 			}
 
-			$('#loading').show();
+			
 
 			$.ajax({
 				url: '/pboard/modify',
@@ -306,9 +278,10 @@
 				processData: false,
 				success: function (response) {
 					console.log(response);
+					$('#loadingmodify').show();
 					const updatedBoard = response.updatedBoard;
 
-					// 3초 후에 화면 업데이트
+					// 2초 후에 화면 업데이트
 					setTimeout(function () {
 						$('#contentView h2').text(updatedBoard.boardtitle);
 						$('#contentView p').text(updatedBoard.boardcontents);
@@ -337,9 +310,13 @@
 						// 파일 리스트 업데이트
 						updateBoardFileList(); // 리스트 업데이트
 
+						//테스트 코드
+						// 부모 창의 데이터 업데이트
+						updateParentData(updatedBoard); // 부모 창에서 데이터 업데이트 함수 호출
+
 						$('#modify').hide(); // 수정 폼 숨김
 						$('#contentView').show(); // 기존 콘텐츠 다시 표시
-						$('#loading').hide();
+						$('#loadingmodify').hide();
 						alert("수정이 완료되었습니다!");
 					}, 2000);
 				}, error: function (jqXHR, textStatus, errorThrown) {
@@ -348,7 +325,49 @@
 				}
 			});
 		});
+
+		function checkFileList() {
+			if (newDataTransfer.files.length === 0 && $('.del-item').length === 0) {
+				$('#warningText').css('visibility', 'visible'); // 경고 메시지 표시
+			} else {
+				$('#warningText').css('visibility', 'hidden'); // 경고 메시지 숨김
+			}
+		}
+
+		//모달 밖 list.html의 내용을 바꾸기 위한 함수
+		function updateParentData(updatedBoard) {
+			// 부모 창의 DOM 업데이트를 위해 직접 호출
+
+			const boardNumToUpdate = $('.boardnum').val(); // 수정된 게시물의 번호
+			const newImageSrc = `/images/pimages/${updatedBoard.images[0]}`; // 새로운 이미지 경로
+
+			// 해당 boardnum을 가진 div를 찾아 이미지 src 업데이트
+			$(`.list${boardNumToUpdate} .boardimg`).attr('src', newImageSrc);
+		}
 	});
 </script>
 
 </html>
+<!--
+	혹시 수정 부분 오류 발생하면 이 코드 넣기
+	//del-item에서 삭제버튼을 누른 사진의 systemname을 저장하는 배열 선언
+		$(document).on('click', '.del-item button', function (e) {
+			e.preventDefault();
+
+			const fileName = $(this).closest('.del-item').find('.fpath').val();
+			console.log('삭제 파일 이름 : ', fileName);
+			deletedFiles.push(fileName);
+			$(this).closest('.del-item').remove();
+
+			// DataTransfer에서 해당 파일 제거
+			for (let i = 0; i < newDataTransfer.items.length; i++) {
+				const item = newDataTransfer.items[i].getAsFile();
+				if (item && item.name === fileName) {
+					newDataTransfer.items.remove(i);
+					break; // 파일을 찾으면 반복문 종료
+				}
+			}
+			checkFileList();
+			console.log('deletedFiles : ', deletedFiles);
+		});
+	-->
