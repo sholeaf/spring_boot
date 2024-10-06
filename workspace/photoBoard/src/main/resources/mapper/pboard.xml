@@ -33,6 +33,10 @@
 		set boardtitle=#{boardtitle}, boardcontents=#{boardcontents},updatedate=now()
 		where boardnum = #{boardnum}
 	</update>
+	<delete id="delete">
+		delete from p_board
+		where boardnum = #{boardnum}
+	</delete>
 </mapper>
 
 

@@ -16,4 +16,5 @@ public interface PBoardMapper {
 	PBoardDTO getBoardByBoardnum(Long boardnum);
 	boolean updateBoard(PBoardDTO updateBoard);
 	Long getNextBoardnum(Long lastBoardnum);
+	boolean delete(Long boardnum);
 }

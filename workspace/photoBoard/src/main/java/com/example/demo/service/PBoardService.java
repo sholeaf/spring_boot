@@ -13,4 +13,5 @@ public interface PBoardService {
 	PBoardDTO getBoardByBoardnum(Long boardnum);
 	boolean modify(PBoardDTO updateBoard);
 	Long getNextBoardnum(Long lastBoardnum);
+	boolean remove(Long boardnum, String[] files) throws Exception;
 }

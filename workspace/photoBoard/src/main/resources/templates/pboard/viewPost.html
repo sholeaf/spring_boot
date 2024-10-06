@@ -19,7 +19,7 @@
 					<div th:each="img, iterStat : ${flist}"
 						th:class="${iterStat.first} ? 'active carousel-item' : 'carousel-item'">
 						<img th:src="@{/images/pimages/}+${img}" th:attr="border=${img.endsWith('.png')} ? '1' : null"
-							style="width: auto; max-width: 500px; height: auto;">
+							style="width: 100%; height: 500px; object-fit: cover;">
 					</div>
 				</div>
 
@@ -34,20 +34,49 @@
 					<span class="visually-hidden">Next</span>
 				</button>
 			</div>
-			<input id="boardnum" type="hidden" th:value="${board.boardnum}" />
-			<h2 th:text="${board.boardtitle}">제목</h2>
-			<p th:text="${board.userid}">작성자</p>
-			<p th:text="${board.boardcontents}">내용</p>
-			<a href="#" id="viewPostlike">하트
-				<p th:text="${board.boardlikecnt}"></p>
-			</a>
-			<th:block>
-				<div th:if="${board.userid == session.loginUser}">
-					<a class="modify" href="#">수정</a>
-					<a class="delete" href="#">삭제</a>
-				</div>
-			</th:block>
+			<div id="contentSection">
+				<input id="boardnum" type="hidden" th:value="${board.boardnum}" />
+				<h2 th:text="${board.boardtitle}">제목</h2>
+				<th:block>
+					<div id="user-area">
+						<p th:text="${board.userid}">작성자</p>
+						<a href="#" id="viewPostlike">하트
+							<p th:text="${board.boardlikecnt}"></p>
+						</a>
+					</div>
+					<div class="md-btn" th:if="${board.userid == session.loginUser}">
+						<a class="modify" href="#">수정</a>
+						<a class="delete" href="#">삭제</a>
+					</div>
+				</th:block>
+				<p th:text="${board.boardcontents}">내용</p>
+
+			</div>
 			<!-- 댓글은 추후에 -->
+			<div id="commentSection" style="max-height: 300px; overflow-y: auto;">
+				<input type="hidden" id="lastReplyNum" th:value="${lastReplynum}" />
+				<div th:if="${rlist == null or rlist.size() == 0}">
+					<p>등록된 댓글이 없습니다.</p>
+				</div>
+				<ul id="commentList" class="list-unstyled">
+					<li th:each="reply : ${rlist}">
+						<div>
+							<strong th:text="${reply.replyuserid}">작성자</strong>
+							<p th:text="${reply.replycontent}">댓글 내용</p>
+							<div th:if="${reply.replyuserid == session.loginUser}">
+								<button class="modifyReply" data-replynum="${reply.replynum}">수정</button>
+								<button class="deleteReply" data-replynum="${reply.replynum}">삭제</button>
+							</div>
+						</div>
+						<hr>
+					</li>
+				</ul>
+				<div id="commentInputSection">
+					<textarea id="commentContent" placeholder="댓글을 입력하세요..." required></textarea>
+					<button id="submitComment">댓글 등록</button>
+				</div>
+			</div>
+
 		</div>
 		<div id="modify" style="display: none;">
 			<h2>게시물 수정</h2>
@@ -96,7 +125,7 @@
 	</div>
 </body>
 
-<script>
+<script th:inline="javascript">
 	$(document).ready(function () {
 		$('body').addClass('no-scroll'); // 스크롤 비활성화
 
@@ -123,11 +152,37 @@
 			$('#modify').show(); // 수정 폼을 보여줌
 			updateBoardFileList(); // 기존 파일 목록 업데이트
 		});
-		
-		$('.delete').on('click',function(e){
-			e.preventDefault();
-			
-			//삭제 요청 넣기
+
+		$('.delete').on('click', function (e) {
+			e.preventDefault(); // 기본 링크 동작 방지
+
+			const boardNum = $('#boardnum').val(); // 게시물 번호
+			const filePaths = []; // 이미지 경로를 저장할 배열
+
+			// 현재 등록된 이미지 파일 경로를 수집
+			$('.carousel-inner img').each(function () {
+				const src = $(this).attr('src'); // src 속성 가져오기
+				filePaths.push(src.substring(src.lastIndexOf('/') + 1)); // 파일명만 추출하여 배열에 추가
+			});
+			console.log("Board Number:", boardNum); // 확인용
+			// 서버에 삭제 요청 전송
+			$.ajax({
+				url: '/pboard/remove', // 게시물 삭제 API URL
+				method: 'POST',
+				data: {
+					boardnum: boardNum,
+					files: filePaths // 현재 등록된 파일 주소
+				},
+				traditional: true, // 배열을 URL 인코딩할 때 필요
+				success: function (response) {
+					alert("게시물 삭제를 완료했습니다.");
+					window.location.href = '/pboard/list'; // 성공 시 리다이렉트
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					console.error('삭제 요청 실패:', textStatus, errorThrown);
+					alert("게시물 삭제에 실패했습니다.");
+				}
+			});
 		});
 
 		// 수정 폼에서 취소 버튼 클릭 시 이벤트
@@ -241,7 +296,7 @@
 			});
 		}
 
-		
+
 
 		$('#modifyForm').on('submit', function (e) {
 			e.preventDefault();
@@ -268,7 +323,7 @@
 				console.log('파일 추가:', newDataTransfer.files[i].name);
 			}
 
-			
+
 
 			$.ajax({
 				url: '/pboard/modify',
@@ -344,6 +399,158 @@
 			// 해당 boardnum을 가진 div를 찾아 이미지 src 업데이트
 			$(`.list${boardNumToUpdate} .boardimg`).attr('src', newImageSrc);
 		}
+
+
+
+		let lastReplyNum = $('#lastReplyNum').val(); // 마지막 댓글 번호 초기화
+		let isLoading = false; // 로딩 상태 초기화
+
+		// 스크롤 이벤트 리스너
+		$('#commentSection').on('scroll', function () {
+			if ($(this).scrollTop() + $(this).innerHeight() >= this.scrollHeight && !isLoading) {
+				isLoading = true; // 로딩 시작
+				loadMoreComments();
+			}
+		});
+
+		const loginUser = /*[[${session.loginUser}]]*/'';
+
+		function loadMoreComments() {
+			console.log('스크롤이 바닥에 도달했습니다.'); // 로그 확인
+			$.ajax({
+				url: '/preply/loadMore', // 서버의 댓글 로드 API 경로
+				method: 'GET',
+				data: {
+					lastBoardnum: $('#boardnum').val(),
+					replynum: lastReplyNum // 마지막 댓글 번호
+				},
+				success: function (data) {
+					console.log('댓글 로드 성공:', data); // 서버 응답 확인
+					console.log("loginUser : ", loginUser);
+					if (data.length > 0) {
+
+						data.forEach(reply => {
+							$('#commentList').append(`
+		                        <li>
+		                            <div>
+		                                <strong>${reply.replyuserid}</strong>
+		                                <p>${reply.replycontent}</p>
+		                                <div style="display: ${reply.replyuserid === loginUser ? 'block' : 'none'};">
+		                                    <button class="modifyReply" data-replynum="${reply.replynum}">수정</button>
+		                                    <button class="deleteReply" data-replynum="${reply.replynum}">삭제</button>
+		                                </div>
+		                            </div>
+		                            <hr>
+		                        </li>
+		                    `);
+							lastReplyNum = reply.replynum; // 마지막 댓글 번호 업데이트
+						});
+					} else {
+						$('#noComments').remove(); // 더 이상 댓글이 없으면 메시지 삭제
+					}
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					console.error("댓글 로드 실패:", textStatus, errorThrown); // 오류 로그 추가
+				},
+				complete: function () {
+					isLoading = false; // 로딩 상태 종료
+				}
+			});
+		}
+
+		$('#submitComment').on('click', function () {
+		    const commentContent = $('#commentContent').val();
+		    const boardNum = $('#boardnum').val();
+		    const userId = loginUser;
+
+		    if (!commentContent) {
+		        alert("댓글 내용을 입력해주세요.");
+		        return;
+		    }
+
+		    // AJAX 요청
+		    $.ajax({
+		        url: '/preply/regist',
+		        method: 'POST',
+		        data: {
+		            replycontent: commentContent,
+		            boardnum: boardNum,
+		            replyuserid: userId
+		        },
+		        success: function (response) {
+		            const newReply = response.reply;
+		            // 새 댓글을 리스트의 가장 위에 추가
+		            $('#commentList').prepend(`
+		                <li>
+		                    <div>
+		                        <strong>${newReply.replyuserid}</strong>
+		                        <p>${newReply.replycontent}</p>
+		                        <div>
+		                            <button class="modifyReply" data-replynum="${newReply.replynum}">수정</button>
+		                            <button class="deleteReply" data-replynum="${newReply.replynum}">삭제</button>
+		                        </div>
+		                    </div>
+		                    <hr>
+		                </li>
+		            `);
+		            $('#commentContent').val(''); // 입력 필드 초기화
+		        },
+		        error: function (jqXHR, textStatus, errorThrown) {
+		            console.error("댓글 등록 실패:", textStatus, errorThrown);
+		            alert("댓글 등록에 실패했습니다.");
+		        }
+		    });
+		});
+		$(document).on('click', '.modifyReply', function () {
+		        const replyNum = $(this).data('replynum'); // 댓글 번호
+		        const currentReplyContent = $(this).closest('li').find('p').text(); // 현재 댓글 내용
+
+		        const newReplyContent = prompt("댓글 내용을 수정하세요:", currentReplyContent);
+		        if (newReplyContent !== null) {
+		            $.ajax({
+		                url: '/preply/modify', // 수정 요청을 보낼 URL
+		                method: 'POST',
+		                data: {
+		                    replynum: replyNum,
+		                    replycontent: newReplyContent
+		                },
+		                success: function (response) {
+		                    // 성공 시 댓글 내용을 업데이트
+		                    $(`li:has(button[data-replynum='${replyNum}']) p`).text(newReplyContent);
+		                    alert("댓글이 수정되었습니다.");
+		                },
+		                error: function (jqXHR, textStatus, errorThrown) {
+		                    console.error("댓글 수정 실패:", textStatus, errorThrown);
+		                    alert("댓글 수정에 실패했습니다.");
+		                }
+		            });
+		        }
+		    });
+
+		    // 댓글 삭제 기능
+		    $(document).on('click', '.deleteReply', function () {
+		        const replyNum = $(this).data('replynum'); // 댓글 번호
+
+		        if (confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
+		            $.ajax({
+		                url: '/preply/remove', // 삭제 요청을 보낼 URL
+		                method: 'POST',
+		                data: {
+		                    replynum: replyNum
+		                },
+		                success: function (response) {
+		                    // 성공 시 댓글 삭제
+		                    $(`li:has(button[data-replynum='${replyNum}'])`).remove();
+		                    alert("댓글이 삭제되었습니다.");
+		                },
+		                error: function (jqXHR, textStatus, errorThrown) {
+		                    console.error("댓글 삭제 실패:", textStatus, errorThrown);
+		                    alert("댓글 삭제에 실패했습니다.");
+		                }
+		            });
+		        }
+		    });
+
 	});
 </script>
 

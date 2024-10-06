@@ -23,4 +23,8 @@
 		delete from p_file
 		where (boardnum=#{boardnum}) and (systemname=#{systemname});
 	</delete>
+	<delete id="delete">
+		delete from p_file
+		where boardnum = #{boardnum}
+	</delete>
 </mapper>

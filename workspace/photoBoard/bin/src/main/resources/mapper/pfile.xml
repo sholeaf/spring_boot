@@ -1,0 +1,26 @@
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.PFileMapper">
+	<insert id="insertFile">
+		insert p_file value(#{systemname},#{orgname},#{boardnum})
+	</insert>
+	<select id="getFilesByBoardnum">
+		select systemname from p_file where boardnum=#{boardnum}
+	</select>
+	<select id="getFileByBoardnum">
+		select *
+		from p_file
+		where boardnum=#{list.boardnum}
+		limit 
+	</select>
+	<select id="getImg">
+		select systemname from p_file
+		where boardnum=#{boardnum}
+		limit 1
+	</select>
+	<delete id="deleteFile">
+		delete from p_file
+		where (boardnum=#{boardnum}) and (systemname=#{systemname});
+	</delete>
+</mapper>

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,8 +19,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.PBoardDTO;
+import com.example.demo.model.PReplyDTO;
 import com.example.demo.service.PBoardService;
 import com.example.demo.service.PFileService;
+import com.example.demo.service.PReplyService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
@@ -35,29 +38,24 @@ public class PBoardController {
 
 	@Autowired
 	private PFileService pfservice;
+	
+	@Autowired
+	private PReplyService prservice;
+	
 
 	@GetMapping("list")
 	public void getPBoard(HttpServletRequest req, Model model) {
 		Long boardnum = pbservice.getStartnum();
+		if(boardnum == null || boardnum == 0) {
+			model.addAttribute("lastBoardnum", null);
+			return;
+		}
 		ArrayList<PBoardDTO> list = pbservice.getList(boardnum, 12);
 		Long lastBoardnum = list.get(list.size() - 1).getBoardnum();
 
-//		model.addAttribute("img",pfservice.getFileByBoardnum(list));
-		// 이미지는 반복문으로 계속된 요청으로 해결(서비스에서 반복문)
-		//그럼 컨트롤러에서 list의 값을 들고 서비스에서 요청
-		// 서비스에서 list의 보드넘 추출해서 그 보드넘가지고 디비 요청해서 새로운 객체에 담음 그럼 boardDTO에 string url 을 넣어서 주소랑 같이 보내주기
 		model.addAttribute("lastBoardnum", lastBoardnum);
 		model.addAttribute("list", list);
 
-		Cookie[] cookies = req.getCookies();
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				if (cookie.getName().equals("w")) {
-					model.addAttribute("w", cookie.getValue());
-					break;
-				}
-			}
-		}
 		System.out.println("초기 BOARDNUM : " + boardnum);
 		System.out.println(pbservice.getList(boardnum, 12));// 데이터 제대로 담겨있음
 	}
@@ -73,7 +71,7 @@ public class PBoardController {
 	}
 
 	@PostMapping("write")
-	public String write(PBoardDTO pboard, MultipartFile[] files, HttpServletResponse resp) throws Exception {
+	public String write(PBoardDTO pboard, MultipartFile[] files) throws Exception {
 		pbservice.regist(pboard, files);
 		return "redirect:/pboard/list";
 	}
@@ -82,10 +80,18 @@ public class PBoardController {
 	public String getBoard(@RequestParam("boardnum") Long boardnum, Model model) {
 		System.out.println(pfservice.getFilesByBoardnum(boardnum));
 		System.out.println(pbservice.getBoardByBoardnum(boardnum));
+		
+		List<PReplyDTO> replies = prservice.getReply(boardnum);
+		
 		model.addAttribute("flist", pfservice.getFilesByBoardnum(boardnum));
 		model.addAttribute("board", pbservice.getBoardByBoardnum(boardnum));
-		// 일단 보드넘을 사용해서 file의 정보와 pboard의 정보를 가져와야함.
+		model.addAttribute("rlist", replies);
+		
+		Long lastReplynum = replies.isEmpty() ? null : replies.get(replies.size() - 1).getReplynum();
+		model.addAttribute("lastReplynum", lastReplynum);
+		
 		// 나중에 reply의 정보도 가져와야함.
+		
 		return "pboard/viewPost"; // viewPost.html 템플릿 반환
 	}
 
@@ -127,5 +133,14 @@ public class PBoardController {
 		else {
 			return ResponseEntity.ok(Map.of("message", "수정 실패"));  
 		}
+	}
+	
+	@PostMapping("remove")
+	public ResponseEntity<String> remove(@RequestParam("boardnum") Long boardnum, @RequestParam("files") String[] files) throws Exception {
+		if(!pbservice.remove(boardnum, files)) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시물 삭제에 실패했습니다.");
+		}
+		 // 삭제 성공 시 200 상태 코드와 메시지 반환
+	    return ResponseEntity.ok("게시물이 삭제되었습니다.");
 	}
 }

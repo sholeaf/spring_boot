@@ -18,4 +18,6 @@ public interface PFileMapper {
 	boolean deleteFile(Long boardnum, String systemname);
 
 	String getImg(long boardnum);
+
+	boolean delete(Long boardnum);
 }

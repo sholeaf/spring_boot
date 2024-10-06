@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link rel="stylesheet" href="/css/header.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+
+<body>
+	<header>
+		<a class="logo" href="#"></a>
+		<a class="logout" href="/user/logout">로그아웃</a>
+	</header>
+
+	<div id="wrap">
+		<div class="headimg"></div>
+		<input type="hidden" id="lastBoardnum" th:value="${lastBoardnum}" />
+		<div class="btn">
+			<a href="#" id="openWriteModal">글쓰기</a>
+		</div>
+		<div class="boardlist">
+			<div th:if="${list == null or list.size() == 0}" class="row no-list">
+				<div>등록된 게시글이 없습니다.</div>
+			</div>
+			<div class="imglist" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
+				<div th:class="'list' + ${board.boardnum}">
+					<a class="viewPost" href="#" th:data-boardnum="${board.boardnum}">
+						<img class="boardimg"
+							th:src="${board.file != null ? '/images/pimages/' + board.file : '/images/test-image.jpg'}">
+					</a>
+					<div class="like">
+						<p class="id">[[${board.userid}]]</p>
+						<a href="" class="likebtn">하트 <p class="likecnt">[[${board.boardlikecnt}]]</p></a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="modal" class="modal">
+		<span class="close">&times;</span>
+		<div id="caption"></div>
+		<div class="modal-content">
+			<h2>게시물 등록</h2>
+			<form id="postForm" method="post" action="/pboard/write" enctype="multipart/form-data">
+				<input type="text" name="boardtitle" placeholder="제목" required /><br /><br />
+				<input type="file" id="fileInput" name="files" style="display: none;" multiple
+					accept=".jpg,.jpeg,.png,.webp,.gif" required />
+				<button type="button" id="addFileButton">사진 추가하기</button>
+				<div id="warningMessage">
+					<p>사진을 추가해야 게시글을 작성할 수 있습니다.</p> <!-- 경고 메시지 -->
+				</div>
+				<ul id="fileList"></ul> <!-- 선택된 파일 리스트를 보기 위한 태그 -->
+				<textarea name="boardcontents" placeholder="내용" required></textarea><br /><br />
+				<input type="text" name="userid" th:value="${session.loginUser}" readonly />
+				<button type="submit">등록</button>
+				<button type="button" id="closeModal">닫기</button>
+			</form>
+			<div id="loading">
+				<div class="loader">
+					<div class="dots">
+						<div class="dot"></div>
+						<div class="dot"></div>
+						<div class="dot"></div>
+					</div>
+					<p style="color: white;">등록 중...</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="viewPostModal" class="modal" style="display:none;">
+		<span class="close">&times;</span>
+		<div class="modal-content"></div>
+	</div>
+
+	<div id="loadingmore" style="display:none;">Loading...</div>
+
+
+	<footer>
+		finish
+	</footer>
+</body>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+	let lastBoardnum = document.getElementById("lastBoardnum").value;
+	let loading = false;
+
+	const fileInput = $('#fileInput')[0];
+	const fileList = $('#fileList');
+	let dataTransfer = new DataTransfer(); // DataTransfer 객체 초기화
+
+
+
+	// 파일 추가 버튼 클릭 시 파일 입력 클릭
+	$('#addFileButton').on('click', function () {
+		fileInput.click(); // 숨겨진 파일 입력 요소 클릭
+	});
+
+	// 파일 추가 및 리스트 업데이트
+	fileInput.addEventListener('change', function (event) {
+		const selectedFiles = Array.from(event.target.files);
+		selectedFiles.forEach(file => {
+			// 중복 체크
+			if (![...dataTransfer.files].some(f => f.name === file.name && f.size === file.size)) {
+				dataTransfer.items.add(file); // DataTransfer에 파일 추가
+			}
+		});
+		fileInput.files = dataTransfer.files; // input의 파일 리스트 업데이트
+		updateFileList(); // 파일 리스트 업데이트
+		if (dataTransfer.files.length > 0) {
+			$('#warningMessage').css('visibility', 'hidden'); // 경고 메시지 숨기기
+		}
+	});
+
+	// 파일 리스트 업데이트 함수
+	function updateFileList() {
+		fileList.empty();
+		Array.from(dataTransfer.files).forEach((file, index) => {
+			const li = $('<li>').addClass('file-item');
+
+			// 이미지 파일일 경우 썸네일 생성
+			if (file.type.startsWith('image/')) {
+				const thumbnailDiv = $('<div>').addClass('thumbnail-container');
+				const img = $('<img>').attr('src', URL.createObjectURL(file)).addClass('thumbnail');
+				thumbnailDiv.append(img);
+				li.prepend(thumbnailDiv);
+			}
+
+			const removeBtn = $('<button>').text('삭제').on('click', function () {
+				dataTransfer.items.remove(index); // DataTransfer에서 파일 제거
+				fileInput.files = dataTransfer.files; // input의 파일 리스트 업데이트
+				updateFileList(); // 리스트 업데이트
+				if (dataTransfer.files.length === 0) {
+					$('#warningMessage').css('visibility', 'visible'); // 경고 메시지 표시
+				}
+			});
+			li.append(removeBtn);
+			fileList.append(li);
+		});
+	}
+
+	$('#postForm').on('submit', function (e) {
+		e.preventDefault(); // 기본 폼 제출 동작 방지
+		$('#loading').show(); // 로딩 아이콘 표시
+
+		// AJAX로 폼 데이터를 전송
+		$.ajax({
+			url: '/pboard/write',
+			type: 'POST',
+			data: new FormData(this),
+			processData: false,
+			contentType: false,
+			success: function (response) {
+				setTimeout(() => {
+					$('#loading').hide();
+					window.location.reload(); // 페이지 리로드
+					alert("게시글 등록 성공!");
+				}, 2000);
+			},
+			error: function () {
+				alert("게시글 등록 실패했습니다!");
+				$('#loading').hide(); // 로딩 숨김
+			}
+		});
+	});
+
+	$(window).scroll(function () {
+		if ($(window).scrollTop() + $(window).height() >= $(document).height() && !loading) {
+			loading = true;
+			$("#loadingmore").show();
+			$.ajax({
+				url: '/pboard/loadMore',
+				data: {lastBoardnum: lastBoardnum},
+				success: function (data) {
+					if (data.length > 0) {
+						data.forEach(list => {
+							const imageUrl = list.file ? '/images/pimages/' + list.file : '/images/test-image.jpg';
+							$('.boardlist').append(
+								`<div class="imglist">
+                                    <div class="list${list.boardnum}"> <!-- 동적으로 클래스 이름 설정 -->
+                                        <a class="viewPost" href="#" data-boardnum="${list.boardnum}">
+                                            <img class="boardimg" src="${imageUrl}">
+                                        </a>
+                                        <div class="like">
+                                            <p class="id">${list.userid}</p>
+                                            <a href="" class="likebtn">하트 <p class="likecnt">${list.boardlikecnt}</p></a>
+                                        </div>
+                                    </div>
+                                </div>`
+							);
+							lastBoardnum = list.boardnum; // 마지막 ID 업데이트
+						});
+						if (data.length < 12) {
+							$(window).off("scroll"); // 더 이상 로드할 데이터가 없을 때 스크롤 이벤트 비활성화
+						}
+					} else {
+						$(window).off("scroll"); // 빈 데이터일 경우 스크롤 이벤트 비활성화
+					}
+					loading = false;
+					$("#loadingmore").hide();
+				},
+				error: function () {
+					loading = false;
+					$("#loadingmore").hide();
+				}
+			});
+		}
+	});
+
+	$(document).on('click', '.viewPost', function (e) {
+		e.preventDefault(); // 기본 링크 동작 방지
+
+		const boardnum = $(this).data('boardnum'); // boardnum 가져오기
+
+		// AJAX 요청을 통해 게시글 내용을 가져옴
+		$.ajax({
+			url: '/pboard/get', // 게시글 내용을 가져오는 URL
+			data: {boardnum: boardnum}, // 쿼리 파라미터로 boardNum 전달
+			success: function (data) {
+				// 모달 내용을 업데이트
+				$('#viewPostModal .modal-content').html(data); // 응답으로 받은 HTML을 모달에 넣기
+				$('#viewPostModal').css('display', 'flex'); // 모달 표시
+			},
+			error: function () {
+				alert('게시글을 불러오는 데 실패했습니다.');
+			}
+		});
+	});
+
+
+
+	// 모달 닫기 기능
+	$('.close').on('click', function () {
+		$('#viewPostModal').hide(); // 모달 숨기기
+		$('body').removeClass('no-scroll'); // 스크롤 활성화
+	});
+
+	// 게시글 작성모달 열기
+	$('#openWriteModal').on('click', function (e) {
+		e.preventDefault(); // 링크의 기본 동작 방지
+		$('#modal').css('display', 'flex'); // 모달 표시
+		$('body').addClass('no-scroll'); // 스크롤 비활성화
+	});
+
+	// 모달 닫기
+	$('#closeModal').on('click', function () {
+		$('#modal').css('display', 'none'); // 모달 숨김
+		$('body').removeClass('no-scroll'); // 스크롤 활성화
+	});
+
+	// 모달 외부 클릭 시 모달 닫기
+	$(window).on('click', function (event) {
+		if (event.target === document.getElementById('modal')) {
+			$('#modal').hide();
+			$('body').removeClass('no-scroll'); // 스크롤 활성화
+		}
+		if (event.target === document.getElementById('viewPostModal')) {
+			$('#viewPostModal').hide();
+			$('body').removeClass('no-scroll'); // 스크롤 활성화
+		}
+	});
+</script>
+
+</html>

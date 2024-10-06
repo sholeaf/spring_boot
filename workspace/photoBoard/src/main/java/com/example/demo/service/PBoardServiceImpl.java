@@ -46,7 +46,6 @@ public class PBoardServiceImpl implements PBoardService {
 
 	@Override
 	public boolean regist(PBoardDTO pbdto, MultipartFile[] files) throws Exception {
-
 		if (pbmapper.insertBoard(pbdto)) {
 			long boardnum = pbmapper.getBoardnum();
 
@@ -66,6 +65,8 @@ public class PBoardServiceImpl implements PBoardService {
 				String systemname = time + UUID.randomUUID().toString() + ext;
 				
 				String path = saveFolder +"pimages/"+ systemname;
+				System.out.println(path);
+				
 				
 				PFileDTO pfdto = new PFileDTO();
 				pfdto.setOrgname(orgname);
@@ -98,4 +99,35 @@ public class PBoardServiceImpl implements PBoardService {
 		return pbmapper.getNextBoardnum(lastBoardnum);
 	}
 
+
+	@Override
+	public boolean remove(Long boardnum, String[] files) throws Exception {
+		if(!pbmapper.delete(boardnum)) {
+			return false;
+		}
+		if(!pfmapper.delete(boardnum)) {
+			return false;
+		}
+		
+
+		for (int i = 0; i < files.length; i++) {
+			String systemname = files[i];
+
+			String filePath = saveFolder + "pimages/" + systemname;
+			File file = new File(filePath);
+
+			// 파일이 존재하는지 체크
+			if (file.exists()) {
+				if (!file.delete()) {
+					// 파일 삭제 실패
+					System.err.println("Failed to delete file: " + filePath);
+					return false; // 삭제 실패 시 false 반환
+				}
+			} else {
+				// 파일이 존재하지 않을 경우 처리
+				System.out.println("File does not exist: " + filePath);
+			}
+		}
+		return true;
+	}
 }

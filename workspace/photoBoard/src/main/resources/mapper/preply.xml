@@ -1,0 +1,36 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.PReplyMapper">
+	<select id="getReply">
+		select * 
+		from p_reply 
+		where boardnum = #{boardnum} 
+		order by replynum
+		desc limit 5
+	</select>
+	<select id="getMoreReply">
+		select * 
+		from p_reply 
+		where boardnum = #{boardnum} and replynum <![CDATA[<]]> #{replynum}
+		order by replynum desc 
+		limit 5
+	</select>
+	<select id="getFirstReply">
+		select *
+		from p_reply
+		where boardnum = #{boardnum} and replyuserid = #{replyuserid}
+		order by replynum desc
+		limit 1
+	</select>
+	<update id="modifyReply">
+		update p_reply
+		set replycontent = #{replydto.replycontent}, updatedate = now()
+		where replynum = #{replynum}
+	</update>
+	<delete id="removeReply">
+		delete from p_reply
+		where replynum = #{replynum}
+	</delete>
+	<insert id="registReply">
+		insert into p_reply(replycontent,replyuserid,boardnum) values(#{replycontent}, #{replyuserid}, #{boardnum})
+	</insert>
+</mapper>

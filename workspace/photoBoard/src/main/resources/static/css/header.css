@@ -117,7 +117,7 @@ a {
 	padding: 20px !important;
 	border-radius: 5px !important;
 	width: 1000px !important;
-	height: 800px;
+	height: 900px;
 	text-align: center !important;
 }
 
@@ -129,6 +129,13 @@ a {
 	font-size: 40px;
 	font-weight: bold;
 	transition: 0.3s;
+}
+
+.md-btn{
+	display: flex;	
+}
+#user-area{
+	display: flex;
 }
 
 .close:hover,
@@ -307,4 +314,28 @@ ul {
 .no-scroll {
     overflow: hidden; /* 스크롤 숨기기 */
 }
+
+/* 댓글 */
+#commentSection {
+    border: 1px solid #ccc;
+    padding: 5px;
+	height: 200px;
+	overflow: hidden;
+	border-radius: 25px; /* 타원 형태 만들기 */
+}
+
+#commentList li div{
+	display: flex;
+}
+
+#commentInputSection {
+    position: sticky;
+    bottom: 0;
+    background-color:  #FFEAEA; /* 배경색 변경 */
+    padding: 10px;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10; /* 다른 요소 위에 표시되도록 함 */
+    border-radius: 0px 0px 25px 25px; /* 타원 형태 만들기 */
+}
+
 
