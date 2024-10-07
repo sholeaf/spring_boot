@@ -17,6 +17,7 @@ create table user(
 );
 insert user value("apple","asd1234","김사과","01012341234","apple@naver.com","서울시","강남구 서초동","~~~","301호","1","산책");
 insert user value("banana","asd1234","반하나","01043214321","banana@naver.com","서울시","강남구 서초동","~~~","401호","0","산책");
+insert user value("cherry","asd1234","이채리","01043214321","banana@naver.com","서울시","강남구 서초동","~~~","401호","0","산책");
 select * from user;
 
 #해쉬태그 추가? 추후
@@ -24,7 +25,7 @@ create table p_board(
 	boardnum bigint primary key auto_increment,
 	boardtitle varchar(300) not null,
 	boardcontents varchar(300) not null,
-	boardlikecnt bigint default 0,
+	boardlikecnt bigint default 0, # 이거 필요 없음 삭제 ㄱㄱ
 	regdate datetime default now(), #등록시간
 	updatedate datetime default now(), #수정시간
 	userid varchar(300),
@@ -37,6 +38,10 @@ create table p_board(
 insert p_board (boardtitle,boardcontents,boardlikecnt,userid) value("sample data","sample contents",1,"apple");
 delete from p_board where boardtitle="test";
 delete from p_file;
+
+delete from p_board where boardnum = 191;
+
+
 
 select * from p_board order by boardnum desc;
 select * from p_file order by boardnum desc;
@@ -57,8 +62,13 @@ create table p_file(
   boardnum bigint
 );
 
-create table likelist(
+select * from p_likelist where pboardnum = 191;
+
+delete from p_likelist where pboardnum = 191 and userid = "apple";
+
+
+create table p_likelist(
 	userid varchar(300),
 	pboardnum bigint
 );
-
+insert into p_likelist (userid,pboardnum) values("apple",83);

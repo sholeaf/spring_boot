@@ -19,15 +19,18 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.PBoardDTO;
+import com.example.demo.model.PLikelistDTO;
 import com.example.demo.model.PReplyDTO;
 import com.example.demo.service.PBoardService;
 import com.example.demo.service.PFileService;
+import com.example.demo.service.PLikelistService;
 import com.example.demo.service.PReplyService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/pboard/*")
@@ -42,32 +45,53 @@ public class PBoardController {
 	@Autowired
 	private PReplyService prservice;
 	
+	@Autowired
+	private PLikelistService plservice;
+	
 
 	@GetMapping("list")
 	public void getPBoard(HttpServletRequest req, Model model) {
 		Long boardnum = pbservice.getStartnum();
-		if(boardnum == null || boardnum == 0) {
+		
+		HttpSession session = req.getSession();
+	    String loginUser = (String) session.getAttribute("loginUser");
+		
+	    if(boardnum == null || boardnum == 0) {
 			model.addAttribute("lastBoardnum", null);
 			return;
 		}
 		ArrayList<PBoardDTO> list = pbservice.getList(boardnum, 12);
 		Long lastBoardnum = list.get(list.size() - 1).getBoardnum();
-
+		//여기서 list와 loginUser를 받는 따로 plservice로 해서 넘겨줌 사이즈는 list랑 같아야함.
+		ArrayList<PLikelistDTO> llist = plservice.getLikelist(loginUser, list);
+		
 		model.addAttribute("lastBoardnum", lastBoardnum);
 		model.addAttribute("list", list);
+		model.addAttribute("llist",llist);
 
 		System.out.println("초기 BOARDNUM : " + boardnum);
 		System.out.println(pbservice.getList(boardnum, 12));// 데이터 제대로 담겨있음
+		System.out.println("llist : "+llist);
 	}
 
 	@GetMapping("loadMore")
 	@ResponseBody
-	public List<PBoardDTO> loadMorePBoard(@RequestParam(required = false) Long lastBoardnum) {
-		Long startBoardnum = pbservice.getNextBoardnum(lastBoardnum);
-		List<PBoardDTO> list = pbservice.getList(lastBoardnum != null ? startBoardnum : 0L, 12);
-		System.out.println("loadmore 에서 초기 보드넘" + startBoardnum);
-		System.out.println(list);
-		return list;
+	public ResponseEntity<Map<String, Object>> loadMorePBoard(@RequestParam(required = false) Long lastBoardnum, HttpServletRequest req) {
+	    HttpSession session = req.getSession();
+	    String loginUser = (String) session.getAttribute("loginUser");
+	    
+	    Long startBoardnum = pbservice.getNextBoardnum(lastBoardnum);
+	    ArrayList<PBoardDTO> boardList = pbservice.getList(lastBoardnum != null ? startBoardnum : 0L, 12);
+	    
+	    // llist를 가져옵니다.
+	    ArrayList<PLikelistDTO> likeList = plservice.getLikelist(loginUser, boardList);
+	    
+	    // Map을 만들어 응답에 포함
+	    Map<String, Object> responseBody = new HashMap<>();
+	    responseBody.put("boardList", boardList);
+	    responseBody.put("likeList", likeList);
+	    
+	    return ResponseEntity.ok(responseBody); // 200 OK 응답
 	}
 
 	@PostMapping("write")
@@ -77,15 +101,16 @@ public class PBoardController {
 	}
 
 	@GetMapping("get")
-	public String getBoard(@RequestParam("boardnum") Long boardnum, Model model) {
-		System.out.println(pfservice.getFilesByBoardnum(boardnum));
-		System.out.println(pbservice.getBoardByBoardnum(boardnum));
+	public String getBoard(@RequestParam("boardnum") Long boardnum, Model model, HttpServletRequest req) {
+		HttpSession session = req.getSession();
+		String loginUser = (String) session.getAttribute("loginUser");
 		
 		List<PReplyDTO> replies = prservice.getReply(boardnum);
 		
 		model.addAttribute("flist", pfservice.getFilesByBoardnum(boardnum));
 		model.addAttribute("board", pbservice.getBoardByBoardnum(boardnum));
 		model.addAttribute("rlist", replies);
+		model.addAttribute("llist", plservice.getLike(loginUser, boardnum));
 		
 		Long lastReplynum = replies.isEmpty() ? null : replies.get(replies.size() - 1).getReplynum();
 		model.addAttribute("lastReplynum", lastReplynum);

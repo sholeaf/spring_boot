@@ -57,7 +57,8 @@ public class PReplyController {
 	
 	@PostMapping("modify")
 	public ResponseEntity<Map<String, String>> modify(@RequestBody PReplyDTO replydto){
-		System.out.println(replydto.getReplycontent());
+		System.out.println("Received replydto: " + replydto);
+	    System.out.println("Reply Content: " + replydto.getReplycontent());
 		Map<String, String> updateReply = new HashMap<>();
 		if(prservice.modifyReply(replydto)) {
 			updateReply.put("replycontent", replydto.getReplycontent());

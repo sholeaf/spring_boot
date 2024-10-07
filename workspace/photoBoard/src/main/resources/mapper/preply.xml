@@ -23,7 +23,7 @@
 	</select>
 	<update id="modifyReply">
 		update p_reply
-		set replycontent = #{replydto.replycontent}, updatedate = now()
+		set replycontent = #{replycontent}, updatedate = now()
 		where replynum = #{replynum}
 	</update>
 	<delete id="removeReply">

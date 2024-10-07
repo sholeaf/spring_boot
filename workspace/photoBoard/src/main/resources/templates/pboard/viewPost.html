@@ -38,13 +38,14 @@
 				<input id="boardnum" type="hidden" th:value="${board.boardnum}" />
 				<h2 th:text="${board.boardtitle}">제목</h2>
 				<th:block>
-					<div id="user-area">
+					<div id="user_area">
 						<p th:text="${board.userid}">작성자</p>
-						<a href="#" id="viewPostlike">하트
-							<p th:text="${board.boardlikecnt}"></p>
+						<a href="#" class="board-likebtn" id="viewPostlike" th:data-boardnum="${board.boardnum}">
+							<img class="likeimg" th:src="${llist == null ? '/images/nomal.png' : '/images/like.png'}" />
+							<p class="likecnt" th:text="${board.boardlikecnt}"></p>
 						</a>
 					</div>
-					<div class="md-btn" th:if="${board.userid == session.loginUser}">
+					<div class="md_btn" th:if="${board.userid == session.loginUser}">
 						<a class="modify" href="#">수정</a>
 						<a class="delete" href="#">삭제</a>
 					</div>
@@ -58,14 +59,21 @@
 				<div th:if="${rlist == null or rlist.size() == 0}">
 					<p>등록된 댓글이 없습니다.</p>
 				</div>
-				<ul id="commentList" class="list-unstyled">
+				<ul id="commentList" class="list_unstyled">
 					<li th:each="reply : ${rlist}">
 						<div>
 							<strong th:text="${reply.replyuserid}">작성자</strong>
-							<p th:text="${reply.replycontent}">댓글 내용</p>
-							<div th:if="${reply.replyuserid == session.loginUser}">
-								<button class="modifyReply" data-replynum="${reply.replynum}">수정</button>
-								<button class="deleteReply" data-replynum="${reply.replynum}">삭제</button>
+							<p class="replyContent" th:text="${reply.replycontent}">댓글 내용</p>
+							<textarea class="editTextarea" style="display: none;"
+								th:text="${reply.replycontent}"></textarea>
+							<div class="buttonGroup">
+								<button class="modifyReply" th:data-replynum="${reply.replynum}"
+									th:style="${session.loginUser != reply.replyuserid} ? 'display: none;' : ''">수정</button>
+								<button class="deleteReply" th:data-replynum="${reply.replynum}"
+									th:style="${session.loginUser != reply.replyuserid} ? 'display: none;' : ''">삭제</button>
+								<button class="saveReply" th:data-replynum="${reply.replynum}" style="display: none;">수정
+									완료</button>
+								<button class="cancelEdit" style="display: none;">취소</button>
 							</div>
 						</div>
 						<hr>
@@ -93,9 +101,9 @@
 				</div>
 
 				<!--기존파일 list-->
-				<ul class="board-file">
-					<li class="del-item" th:each="img:${flist}">
-						<div class="thumbnail-container">
+				<ul class="board_file">
+					<li class="del_item" th:each="img:${flist}">
+						<div class="thumbnail_container">
 							<input type="hidden" class="fpath" th:value="${img}">
 							<img th:src="@{/images/pimages/}+${img}" class="thumbnail">
 						</div>
@@ -131,14 +139,14 @@
 
 		const newFileInput = $('#newFileInput')[0];
 		const newFileList = $('#newFileList');
-		const boardFileList = $('.board-file');
+		const boardFileList = $('.board_file');
 
 		let orgFile = [];
 		let deletedFiles = [];
 		let newDataTransfer = new DataTransfer();
 
 
-		$('.del-item').each(function () {
+		$('.del_item').each(function () {
 			const filePath = $(this).find('.fpath').val();
 			orgFile.push(filePath);
 		});
@@ -203,7 +211,7 @@
 		function updateBoardFileList() {
 			boardFileList.empty();
 			orgFile.forEach(file => {
-				const li = $('<li>').addClass('del-item');
+				const li = $('<li>').addClass('del_item');
 				const thumbnailDiv = $('<div>').addClass('thumbnail-container');
 				const img = $('<img>').attr('src', `/images/pimages/${file}`).addClass('thumbnail');
 				const input = $('<input>').attr('type', 'hidden').addClass('fpath').val(file);
@@ -251,7 +259,7 @@
 			// 기존 파일을 제거하고 newFileList를 업데이트
 			$('#newFileList').empty(); // newFileList 초기화
 			filteredDeletedFiles.forEach(file => {
-				const li = $('<li>').addClass('file-item');
+				const li = $('<li>').addClass('file_item');
 				const removeBtn = $('<button>').text('삭제').on('click', function () {
 					// 삭제 버튼 클릭 시 파일 제거
 					const index = [...newDataTransfer.files].findIndex(f => f.name === file);
@@ -274,11 +282,11 @@
 		function updateNewFileList() {
 			newFileList.empty();
 			Array.from(newDataTransfer.files).forEach((file, index) => {
-				const li = $('<li>').addClass('file-item');
+				const li = $('<li>').addClass('file_item');
 
 				// 이미지 파일일 경우 썸네일 생성
 				if (file.type.startsWith('image/')) {
-					const thumbnailDiv = $('<div>').addClass('thumbnail-container');
+					const thumbnailDiv = $('<div>').addClass('thumbnail_container');
 					const img = $('<img>').attr('src', URL.createObjectURL(file)).addClass('thumbnail');
 					thumbnailDiv.append(img);
 					li.prepend(thumbnailDiv);
@@ -300,7 +308,7 @@
 
 		$('#modifyForm').on('submit', function (e) {
 			e.preventDefault();
-			const delitem = $('.del-item').length;
+			const delitem = $('.del_item').length;
 
 
 			if (delitem === 0 && newDataTransfer.files.length === 0) {
@@ -382,7 +390,7 @@
 		});
 
 		function checkFileList() {
-			if (newDataTransfer.files.length === 0 && $('.del-item').length === 0) {
+			if (newDataTransfer.files.length === 0 && $('.del_item').length === 0) {
 				$('#warningText').css('visibility', 'visible'); // 경고 메시지 표시
 			} else {
 				$('#warningText').css('visibility', 'hidden'); // 경고 메시지 숨김
@@ -428,24 +436,27 @@
 					console.log('댓글 로드 성공:', data); // 서버 응답 확인
 					console.log("loginUser : ", loginUser);
 					if (data.length > 0) {
-
 						data.forEach(reply => {
 							$('#commentList').append(`
-		                        <li>
-		                            <div>
-		                                <strong>${reply.replyuserid}</strong>
-		                                <p>${reply.replycontent}</p>
-		                                <div style="display: ${reply.replyuserid === loginUser ? 'block' : 'none'};">
-		                                    <button class="modifyReply" data-replynum="${reply.replynum}">수정</button>
-		                                    <button class="deleteReply" data-replynum="${reply.replynum}">삭제</button>
-		                                </div>
-		                            </div>
-		                            <hr>
-		                        </li>
-		                    `);
+					            <li>
+					                <div>
+					                    <strong th:text="${reply.replyuserid}">${reply.replyuserid}</strong>
+					                    <p class="replyContent" th:text="${reply.replycontent}">${reply.replycontent}</p>
+					                    <textarea class="editTextarea" style="display: none;" th:text="${reply.replycontent}">${reply.replycontent}</textarea>
+					                    <div class="buttonGroup" style="display: ${reply.replyuserid === loginUser ? 'block' : 'none'};">
+					                        <button class="modifyReply" data-replynum="${reply.replynum}">수정</button>
+					                        <button class="deleteReply" data-replynum="${reply.replynum}">삭제</button>
+					                        <button class="saveReply" data-replynum="${reply.replynum}" style="display: none;">수정 완료</button>
+					                        <button class="cancelEdit" style="display: none;">취소</button>
+					                    </div>
+					                </div>
+					                <hr>
+					            </li>
+					        `);
 							lastReplyNum = reply.replynum; // 마지막 댓글 번호 업데이트
 						});
-					} else {
+					}
+					else {
 						$('#noComments').remove(); // 더 이상 댓글이 없으면 메시지 삭제
 					}
 				},
@@ -459,28 +470,29 @@
 		}
 
 		$('#submitComment').on('click', function () {
-		    const commentContent = $('#commentContent').val();
-		    const boardNum = $('#boardnum').val();
-		    const userId = loginUser;
+			const commentContent = $('#commentContent').val();
+			const boardNum = $('#boardnum').val();
+			const userId = loginUser;
 
-		    if (!commentContent) {
-		        alert("댓글 내용을 입력해주세요.");
-		        return;
-		    }
+			if (!commentContent) {
+				alert("댓글 내용을 입력해주세요.");
+				return;
+			}
 
-		    // AJAX 요청
-		    $.ajax({
-		        url: '/preply/regist',
-		        method: 'POST',
-		        data: {
-		            replycontent: commentContent,
-		            boardnum: boardNum,
-		            replyuserid: userId
-		        },
-		        success: function (response) {
-		            const newReply = response.reply;
-		            // 새 댓글을 리스트의 가장 위에 추가
-		            $('#commentList').prepend(`
+			// AJAX 요청
+			$.ajax({
+				url: '/preply/regist',
+				method: 'POST',
+				data: {
+					replycontent: commentContent,
+					boardnum: boardNum,
+					replyuserid: userId
+				},
+				success: function (response) {
+					const newReply = response.reply;
+					alert("댓글 등록 완료");
+					// 새 댓글을 리스트의 가장 위에 추가
+					$('#commentList').prepend(`
 		                <li>
 		                    <div>
 		                        <strong>${newReply.replyuserid}</strong>
@@ -493,63 +505,168 @@
 		                    <hr>
 		                </li>
 		            `);
-		            $('#commentContent').val(''); // 입력 필드 초기화
-		        },
-		        error: function (jqXHR, textStatus, errorThrown) {
-		            console.error("댓글 등록 실패:", textStatus, errorThrown);
-		            alert("댓글 등록에 실패했습니다.");
-		        }
-		    });
+					$('#commentContent').val(''); // 입력 필드 초기화
+
+					// 댓글 작성 후 최상단으로 스크롤
+					$('#commentSection').scrollTop(0);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					console.error("댓글 등록 실패:", textStatus, errorThrown);
+					alert("댓글 등록에 실패했습니다.");
+				}
+			});
 		});
-		$(document).on('click', '.modifyReply', function () {
-		        const replyNum = $(this).data('replynum'); // 댓글 번호
-		        const currentReplyContent = $(this).closest('li').find('p').text(); // 현재 댓글 내용
 
-		        const newReplyContent = prompt("댓글 내용을 수정하세요:", currentReplyContent);
-		        if (newReplyContent !== null) {
-		            $.ajax({
-		                url: '/preply/modify', // 수정 요청을 보낼 URL
-		                method: 'POST',
-		                data: {
-		                    replynum: replyNum,
-		                    replycontent: newReplyContent
-		                },
-		                success: function (response) {
-		                    // 성공 시 댓글 내용을 업데이트
-		                    $(`li:has(button[data-replynum='${replyNum}']) p`).text(newReplyContent);
-		                    alert("댓글이 수정되었습니다.");
-		                },
-		                error: function (jqXHR, textStatus, errorThrown) {
-		                    console.error("댓글 수정 실패:", textStatus, errorThrown);
-		                    alert("댓글 수정에 실패했습니다.");
-		                }
-		            });
-		        }
-		    });
+		// 댓글 수정 버튼 클릭 이벤트
+		$('#commentList').on('click', '.modifyReply', function () {
+			const $replyItem = $(this).closest('li');
+			$replyItem.find('.replyContent').hide(); // 댓글 내용 숨기기
+			$replyItem.find('.editTextarea').show(); // 수정 입력란 보이기
+			$(this).hide(); // 수정 버튼 숨기기
+			$replyItem.find('.saveReply').show(); // 수정 완료 버튼 표시
+			$replyItem.find('.cancelEdit').show(); // 취소 버튼 표시
+			$replyItem.find('.deleteReply').hide(); // 삭제 버튼 숨기기
 
-		    // 댓글 삭제 기능
-		    $(document).on('click', '.deleteReply', function () {
-		        const replyNum = $(this).data('replynum'); // 댓글 번호
+			// 댓글 입력란 숨기기
+			$('#commentInputSection').hide();
+		});
 
-		        if (confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
-		            $.ajax({
-		                url: '/preply/remove', // 삭제 요청을 보낼 URL
-		                method: 'POST',
-		                data: {
-		                    replynum: replyNum
-		                },
-		                success: function (response) {
-		                    // 성공 시 댓글 삭제
-		                    $(`li:has(button[data-replynum='${replyNum}'])`).remove();
-		                    alert("댓글이 삭제되었습니다.");
-		                },
-		                error: function (jqXHR, textStatus, errorThrown) {
-		                    console.error("댓글 삭제 실패:", textStatus, errorThrown);
-		                    alert("댓글 삭제에 실패했습니다.");
-		                }
-		            });
-		        }
-		    });
+		// 수정 완료 버튼 클릭 이벤트
+		$('#commentList').on('click', '.saveReply', function () {
+			const $replyItem = $(this).closest('li');
+			const replyNum = $(this).data('replynum');
+			const replyContent = $replyItem.find('.editTextarea').val();
+
+			$.ajax({
+				url: '/preply/modify',
+				type: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify({replynum: replyNum, replycontent: replyContent}),
+				success: function (response) {
+					alert("등록완료");
+					$replyItem.find('.replyContent').text(replyContent).show(); // 수정된 댓글 내용 표시
+					$replyItem.find('.editTextarea').hide(); // 수정 입력란 숨기기
+					$(this).hide(); // 수정 완료 버튼 숨기기
+					$replyItem.find('.modifyReply').show(); // 수정 버튼 다시 보이기
+					$replyItem.find('.cancelEdit').hide(); // 취소 버튼 숨기기
+					$replyItem.find('.deleteReply').show(); // 삭제 버튼 다시 보이기
+
+					// 댓글 입력란 다시 보이기
+					$('#commentInputSection').show();
+				}.bind(this),
+				error: function (xhr) {
+					console.error(xhr);
+					alert("등록실패");
+				}
+			});
+		});
+
+		// 취소 버튼 클릭 이벤트
+		$('#commentList').on('click', '.cancelEdit', function () {
+			const $replyItem = $(this).closest('li');
+			$replyItem.find('.replyContent').show(); // 댓글 내용 다시 보이기
+			$replyItem.find('.editTextarea').hide(); // 수정 입력란 숨기기
+			$(this).hide(); // 취소 버튼 숨기기
+			$replyItem.find('.saveReply').hide(); // 수정 완료 버튼 숨기기
+			$replyItem.find('.modifyReply').show(); // 수정 버튼 다시 보이기
+			$replyItem.find('.deleteReply').show(); // 삭제 버튼 다시 보이기
+
+			// 댓글 입력란 다시 보이기
+			$('#commentInputSection').show();
+		});
+
+		// 삭제 버튼 클릭 이벤트
+		$('#commentList').on('click', '.deleteReply', function () {
+			const replyNum = $(this).data('replynum');
+			const $thisButton = $(this);
+
+			if (confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
+				$.ajax({
+					url: '/preply/remove',
+					type: 'POST',
+					data: {replynum: replyNum},
+					success: function (response) {
+						alert("삭제 완료");
+						$thisButton.closest('li').remove(); // 댓글 삭제
+					},
+					error: function (xhr) {
+						console.error(xhr);
+						alert("삭제 실패");
+					}
+				});
+			}
+		});
+
+
+
+		function updateLikeStatus(boardNum, newLikeCount, isLiked) {
+			// 부모 창의 좋아요 상태 업데이트
+			const likeCountElem = $(`.list${boardNum} .likecnt`);
+			likeCountElem.text(newLikeCount); // 새로운 좋아요 카운트 설정
+
+			// 이미지 업데이트
+			const likeImgElem = $(`.list${boardNum} .likeimg`);
+			if (isLiked) {
+				likeImgElem.attr('src', '/images/like.png'); // 좋아요 이미지로 변경
+			} else {
+				likeImgElem.attr('src', '/images/nomal.png'); // 일반 이미지로 변경
+			}
+		}
+
+		$('.board-likebtn').on('click', function (e) {
+			e.preventDefault();
+
+			const boardnum = $(this).data('boardnum');
+			const likeImg = $(this).find('.likeimg');
+			const likeCountElem = $(this).find('.likecnt');
+
+			$.ajax({
+				url: '/plikelist/checklike',
+				data: {boardnum: boardnum},
+				success: function (data) {
+					if (data == null) {
+						// 좋아요가 없는 상태
+						$.ajax({
+							url: '/plikelist/insert',
+							data: {boardnum: boardnum},
+							success: function () {
+								const currentCount = parseInt(likeCountElem.text());
+								const newCount = currentCount + 1;
+								likeCountElem.text(newCount);
+								likeImg.attr('src', '/images/like.png'); // 여기서 이미지 변경
+
+								// 부모 창의 좋아요 상태 업데이트
+								updateLikeStatus(boardnum, newCount, true);
+							},
+							error: function () {
+								alert('좋아요 추가 실패.');
+							}
+						});
+					} else {
+						// 좋아요가 있는 상태
+						$.ajax({
+							url: '/plikelist/delete',
+							data: {boardnum: boardnum},
+							success: function () {
+								const currentCount = parseInt(likeCountElem.text());
+								const newCount = currentCount - 1;
+								likeCountElem.text(newCount);
+								likeImg.attr('src', '/images/nomal.png'); // 여기서 이미지 변경
+
+								// 부모 창의 좋아요 상태 업데이트
+								updateLikeStatus(boardnum, newCount, false);
+							},
+							error: function () {
+								alert('좋아요 취소 실패.');
+							}
+						});
+					}
+				},
+				error: function () {
+					alert('좋아요 상태 확인 실패');
+				}
+			});
+		});
 
 	});
 </script>

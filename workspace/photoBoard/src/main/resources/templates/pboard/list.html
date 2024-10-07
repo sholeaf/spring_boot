@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Document</title>
 	<link rel="stylesheet" href="/css/header.css">
+	<link rel="stylesheet" href="/css/pboard.css">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.css">
 	<script src="https://cdn.jsdelivr.net/npm/swiper@latest/swiper-bundle.min.js"></script>
@@ -25,10 +26,10 @@
 			<a href="#" id="openWriteModal">글쓰기</a>
 		</div>
 		<div class="boardlist">
-			<div th:if="${list == null or list.size() == 0}" class="row no-list">
+			<div th:if="${list == null or list.size() == 0}" class="no_list">
 				<div>등록된 게시글이 없습니다.</div>
 			</div>
-			<div class="imglist" th:if="${list != null and list.size() > 0}" th:each="board:${list}">
+			<div class="imglist" th:if="${list != null and list.size() > 0}" th:each="board, iterStat : ${list}">
 				<div th:class="'list' + ${board.boardnum}">
 					<a class="viewPost" href="#" th:data-boardnum="${board.boardnum}">
 						<img class="boardimg"
@@ -36,17 +37,22 @@
 					</a>
 					<div class="like">
 						<p class="id">[[${board.userid}]]</p>
-						<a href="" class="likebtn">하트 <p class="likecnt">[[${board.boardlikecnt}]]</p></a>
+						<a href="" class="likebtn" th:data-boardnum="${board.boardnum}">
+							<img class="likeimg"
+								th:src="${llist[iterStat.index] == null ? '/images/nomal.png' : '/images/like.png'}" />
+							<p class="likecnt">[[${board.boardlikecnt}]]</p>
+						</a>
 					</div>
 				</div>
 			</div>
 		</div>
+
 	</div>
 
 	<div id="modal" class="modal">
 		<span class="close">&times;</span>
 		<div id="caption"></div>
-		<div class="modal-content">
+		<div class="modal_content">
 			<h2>게시물 등록</h2>
 			<form id="postForm" method="post" action="/pboard/write" enctype="multipart/form-data">
 				<input type="text" name="boardtitle" placeholder="제목" required /><br /><br />
@@ -77,7 +83,7 @@
 
 	<div id="viewPostModal" class="modal" style="display:none;">
 		<span class="close">&times;</span>
-		<div class="modal-content"></div>
+		<div class="modal_content"></div>
 	</div>
 
 	<div id="loadingmore" style="display:none;">Loading...</div>
@@ -123,11 +129,11 @@
 	function updateFileList() {
 		fileList.empty();
 		Array.from(dataTransfer.files).forEach((file, index) => {
-			const li = $('<li>').addClass('file-item');
+			const li = $('<li>').addClass('file_item');
 
 			// 이미지 파일일 경우 썸네일 생성
 			if (file.type.startsWith('image/')) {
-				const thumbnailDiv = $('<div>').addClass('thumbnail-container');
+				const thumbnailDiv = $('<div>').addClass('thumbnail_container');
 				const img = $('<img>').attr('src', URL.createObjectURL(file)).addClass('thumbnail');
 				thumbnailDiv.append(img);
 				li.prepend(thumbnailDiv);
@@ -179,25 +185,35 @@
 				url: '/pboard/loadMore',
 				data: {lastBoardnum: lastBoardnum},
 				success: function (data) {
-					if (data.length > 0) {
-						data.forEach(list => {
+					// data.boardList와 data.likeList를 사용합니다.
+					const boardList = data.boardList;
+					const likeList = data.likeList;
+
+					if (boardList.length > 0) {
+						boardList.forEach((list, index) => {
 							const imageUrl = list.file ? '/images/pimages/' + list.file : '/images/test-image.jpg';
-							$('.boardlist').append(
-								`<div class="imglist">
-                                    <div class="list${list.boardnum}"> <!-- 동적으로 클래스 이름 설정 -->
-                                        <a class="viewPost" href="#" data-boardnum="${list.boardnum}">
-                                            <img class="boardimg" src="${imageUrl}">
-                                        </a>
-                                        <div class="like">
-                                            <p class="id">${list.userid}</p>
-                                            <a href="" class="likebtn">하트 <p class="likecnt">${list.boardlikecnt}</p></a>
-                                        </div>
-                                    </div>
-                                </div>`
-							);
+							const userLike = likeList[index]; // 현재 인덱스에 해당하는 좋아요 데이터
+
+							$('.boardlist').append(`
+								<div class="imglist">
+	                                <div class="list${list.boardnum}"> <!-- 동적으로 클래스 이름 설정 -->
+	                                    <a class="viewPost" href="#" data-boardnum="${list.boardnum}">
+	                                        <img class="boardimg" src="${imageUrl}">
+	                                    </a>
+	                                    <div class="like">
+	                                        <p class="id">${list.userid}</p>
+	                                        <a href="" class="likebtn" data-boardnum="${list.boardnum}">
+	                                            <img class="likeimg" src="${userLike != null ? '/images/like.png' : '/images/nomal.png'}" />
+	                                            <p class="likecnt">${list.boardlikecnt}</p>
+	                                        </a>
+	                                    </div>
+	                                </div>
+	                            </div>
+							`);
 							lastBoardnum = list.boardnum; // 마지막 ID 업데이트
 						});
-						if (data.length < 12) {
+
+						if (boardList.length < 12) {
 							$(window).off("scroll"); // 더 이상 로드할 데이터가 없을 때 스크롤 이벤트 비활성화
 						}
 					} else {
@@ -213,7 +229,6 @@
 			});
 		}
 	});
-
 	$(document).on('click', '.viewPost', function (e) {
 		e.preventDefault(); // 기본 링크 동작 방지
 
@@ -225,7 +240,7 @@
 			data: {boardnum: boardnum}, // 쿼리 파라미터로 boardNum 전달
 			success: function (data) {
 				// 모달 내용을 업데이트
-				$('#viewPostModal .modal-content').html(data); // 응답으로 받은 HTML을 모달에 넣기
+				$('#viewPostModal .modal_content').html(data); // 응답으로 받은 HTML을 모달에 넣기
 				$('#viewPostModal').css('display', 'flex'); // 모달 표시
 			},
 			error: function () {
@@ -266,6 +281,70 @@
 			$('body').removeClass('no-scroll'); // 스크롤 활성화
 		}
 	});
+
+	$('.likebtn').on('click', function (e) {
+	    e.preventDefault();
+
+	    const boardnum = $(this).data('boardnum');
+	    const likeImg = $(this).find('.likeimg');
+	    const likeCountElem = $(this).find('.likecnt');
+
+	    // 버튼 클릭 비활성화
+	    $(this).prop('disabled', true);
+
+	    $.ajax({
+	        url: '/plikelist/checklike',
+	        data: { boardnum: boardnum },
+	        success: function (data) {
+	            if (data == null) {
+	                // 좋아요가 없는 상태
+	                $.ajax({
+	                    url: '/plikelist/insert',
+	                    data: { boardnum: boardnum },
+	                    success: function () {
+	                        const currentCount = parseInt(likeCountElem.text());
+	                        const newCount = currentCount + 1;
+	                        likeCountElem.text(newCount);
+	                        likeImg.attr('src', '/images/like.png'); // 이미지 변경
+	                    },
+	                    error: function () {
+	                        alert('좋아요 추가 실패.');
+	                    },
+	                    complete: function () {
+	                        // 요청 완료 후 버튼 다시 활성화
+	                        $(this).prop('disabled', false);
+	                    }.bind(this)
+	                });
+	            } else {
+	                // 좋아요가 있는 상태
+	                $.ajax({
+	                    url: '/plikelist/delete',
+	                    data: { boardnum: boardnum },
+	                    success: function () {
+	                        const currentCount = parseInt(likeCountElem.text());
+	                        const newCount = currentCount - 1;
+	                        likeCountElem.text(newCount);
+	                        likeImg.attr('src', '/images/nomal.png'); // 이미지 변경
+	                    },
+	                    error: function () {
+	                        alert('좋아요 취소 실패.');
+	                    },
+	                    complete: function () {
+	                        // 요청 완료 후 버튼 다시 활성화
+	                        $(this).prop('disabled', false);
+	                    }.bind(this)
+	                });
+	            }
+	        },
+	        error: function () {
+	            alert('좋아요 상태 확인 실패');
+	            // 버튼 다시 활성화
+	            $(this).prop('disabled', false);
+	        }.bind(this)
+	    });
+	});
+
+
 </script>
 
 </html>

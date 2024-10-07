@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.mapper.PBoardMapper;
 import com.example.demo.mapper.PFileMapper;
+import com.example.demo.mapper.PLikelistMapper;
 import com.example.demo.model.PBoardDTO;
 import com.example.demo.model.PFileDTO;
 
@@ -28,12 +29,17 @@ public class PBoardServiceImpl implements PBoardService {
 	
 	@Autowired
 	private PFileMapper pfmapper;
+	
+	@Autowired
+	private PLikelistMapper plmapper;
 
 	@Override
 	public ArrayList<PBoardDTO> getList(Long lastBoardnum, int limit) {
 		ArrayList<PBoardDTO> list = pbmapper.getList(lastBoardnum, limit);
 		for(int i = 0; i < list.size(); i++) {
 			String file = pfmapper.getImg(list.get(i).getBoardnum());
+			Long like = plmapper.countlike(list.get(i).getBoardnum());
+			list.get(i).setBoardlikecnt(like);
 			list.get(i).setFile(file);
 		}
 		return list;
@@ -86,7 +92,9 @@ public class PBoardServiceImpl implements PBoardService {
 
 	@Override
 	public PBoardDTO getBoardByBoardnum(Long boardnum) {
-		return pbmapper.getBoardByBoardnum(boardnum);
+		PBoardDTO boardDTO = pbmapper.getBoardByBoardnum(boardnum);
+		boardDTO.setBoardlikecnt(plmapper.countlike(boardnum));
+		return boardDTO;
 	}
 
 	@Override
